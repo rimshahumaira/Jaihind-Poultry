@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { API } from '../App';
 import Navigation from '../components/Navigation';
 import StatusBar from '../components/StatusBar';
 
 function Collections({ user, onLogout }) {
+  const printRef = useRef();
   const [customers, setCustomers] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -13,6 +14,7 @@ function Collections({ user, onLogout }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [lastPayment, setLastPayment] = useState(null);
 
   const [formData, setFormData] = useState({
     amount: '',
@@ -93,6 +95,7 @@ function Collections({ user, onLogout }) {
         notes: formData.notes
       };
       setReceivedPayments([newPayment, ...receivedPayments]);
+      setLastPayment(newPayment);
 
       setFormData({ amount: '', notes: '' });
 
@@ -112,6 +115,17 @@ function Collections({ user, onLogout }) {
     return (Math.round(qty * 100) / 100).toFixed(2);
   };
 
+  const handleThermalPrint = () => {
+    const printWindow = window.open('', '', 'width=800,height=600');
+    printWindow.document.write(printRef.current.innerHTML);
+    printWindow.document.close();
+
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 250);
+  };
+
   const filteredCustomers = customers.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -119,9 +133,102 @@ function Collections({ user, onLogout }) {
   return (
     <>
       <StatusBar user={user} onLogout={onLogout} />
+
+      {/* Thermal Cash Receipt - Hidden, used for printing */}
+      <div ref={printRef} style={{ display: 'none' }}>
+        <div style={{
+          fontFamily: 'monospace',
+          fontSize: '12px',
+          lineHeight: '1.2',
+          padding: '5mm',
+          maxWidth: '80mm',
+          whiteSpace: 'pre-wrap',
+          wordWrap: 'break-word',
+          backgroundColor: 'white',
+          color: 'black'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '5px' }}>POULTRY TRADER APP</div>
+          <div style={{ textAlign: 'center', marginBottom: '10px', fontSize: '11px' }}>CASH RECEIPT</div>
+          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+          <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+            <div>Receipt #:    {Math.random().toString(36).substr(2, 9).toUpperCase()}</div>
+            <div>Date:        {new Date().toISOString().split('T')[0]}</div>
+            <div>Time:        {new Date().toLocaleTimeString('en-IN')}</div>
+          </div>
+
+          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+          <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+            <div>Customer:    {selectedCustomer?.name}</div>
+            <div>Phone:       {selectedCustomer?.phone}</div>
+          </div>
+
+          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+          <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontWeight: 'bold' }}>
+              <span>Description</span>
+              <span style={{ textAlign: 'right' }}>Amount</span>
+            </div>
+            <div style={{ borderBottom: '1px solid black', marginBottom: '4px' }}></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span>Payment Received</span>
+              <span style={{ textAlign: 'right' }}>{lastPayment ? formatCurrency(lastPayment.amount) : '₹0.00'}</span>
+            </div>
+            {lastPayment?.notes && (
+              <div style={{ fontSize: '10px', color: '#333', marginBottom: '8px', fontStyle: 'italic' }}>
+                Mode: {lastPayment.notes}
+              </div>
+            )}
+          </div>
+
+          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+          <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+              <span>Amount Received:</span>
+              <span>{lastPayment ? formatCurrency(lastPayment.amount) : '₹0.00'}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px', fontWeight: 'bold' }}>
+              <span>Previous Outstanding:</span>
+              <span>{selectedCustomer ? formatCurrency(selectedCustomer.outstanding_amount) : '₹0.00'}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '12px' }}>
+              <span>New Outstanding:</span>
+              <span>{selectedCustomer ? formatCurrency(Math.max(0, selectedCustomer.outstanding_amount - (lastPayment?.amount || 0))) : '₹0.00'}</span>
+            </div>
+          </div>
+
+          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+          <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '8px' }}>
+            Thank you for your payment!
+          </div>
+          <div style={{ textAlign: 'center', fontSize: '9px', marginBottom: '12px', color: '#333' }}>
+            Please keep this receipt for your records
+          </div>
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>POULTRY TRADER APP</div>
+          <div style={{ borderBottom: '1px solid black' }}></div>
+        </div>
+      </div>
+
       <div className="main-content container">
         {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
+        {success && (
+          <div style={{ backgroundColor: '#d4edda', border: '1px solid #c3e6cb', borderRadius: '6px', padding: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ color: '#155724' }}>{success}</div>
+            {lastPayment && (
+              <button
+                onClick={handleThermalPrint}
+                className="btn btn-block"
+                style={{ background: '#34495e', color: 'white', width: 'auto', marginLeft: '12px', fontSize: '12px', padding: '8px 16px' }}
+              >
+                🖨️ Print Receipt
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="mb-3">
           <input

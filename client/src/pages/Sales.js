@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { API } from '../App';
 import Navigation from '../components/Navigation';
 import StatusBar from '../components/StatusBar';
 
 function Sales({ user, onLogout }) {
+  const printRef = useRef();
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [sales, setSales] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -13,6 +14,7 @@ function Sales({ user, onLogout }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState('sales');
+  const [selectedSaleForPrint, setSelectedSaleForPrint] = useState(null);
   const [paymentFormData, setPaymentFormData] = useState({
     customer_id: '',
     amount: '',
@@ -211,11 +213,104 @@ function Sales({ user, onLogout }) {
     }
   };
 
+  const handleThermalPrint = () => {
+    const printWindow = window.open('', '', 'width=800,height=600');
+    printWindow.document.write(printRef.current.innerHTML);
+    printWindow.document.close();
+
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 250);
+  };
+
   const totalAmount = sales.reduce((sum, s) => sum + s.amount, 0);
   const totalWeight = sales.reduce((sum, s) => sum + s.weight, 0);
 
   return (
     <>
+      {/* Thermal Sales Receipt - Hidden, used for printing */}
+      <div ref={printRef} style={{ display: 'none' }}>
+        {selectedSaleForPrint && (
+          <div style={{
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            lineHeight: '1.2',
+            padding: '5mm',
+            maxWidth: '80mm',
+            whiteSpace: 'pre-wrap',
+            wordWrap: 'break-word',
+            backgroundColor: 'white',
+            color: 'black'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '5px' }}>POULTRY TRADER APP</div>
+            <div style={{ textAlign: 'center', marginBottom: '10px', fontSize: '11px' }}>SALES INVOICE</div>
+            <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+            <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+              <div>Bill #:      {selectedSaleForPrint.bill_number}</div>
+              <div>Date:       {selectedSaleForPrint.date}</div>
+              <div>Invoice #:  {selectedSaleForPrint.id.substr(0, 8).toUpperCase()}</div>
+            </div>
+
+            <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+            <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+              <div>Customer:   {selectedSaleForPrint.customer_name}</div>
+            </div>
+
+            <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+            <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 1.5fr', gap: '0px', marginBottom: '4px' }}>
+                <div>Description</div>
+                <div style={{ textAlign: 'center' }}>Qty</div>
+                <div style={{ textAlign: 'center' }}>Rate</div>
+                <div style={{ textAlign: 'right' }}>Amount</div>
+              </div>
+              <div style={{ borderBottom: '1px solid black', marginBottom: '4px' }}></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 1.5fr', gap: '0px', marginBottom: '8px' }}>
+                <div>Poultry</div>
+                <div style={{ textAlign: 'center' }}>{(Math.round(selectedSaleForPrint.weight * 100) / 100).toFixed(2)}kg</div>
+                <div style={{ textAlign: 'center' }}>₹{(Math.round(selectedSaleForPrint.rate * 100) / 100).toFixed(2)}</div>
+                <div style={{ textAlign: 'right' }}>{formatCurrency(selectedSaleForPrint.amount)}</div>
+              </div>
+            </div>
+
+            <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+            <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                <span>Subtotal:</span>
+                <span>{formatCurrency(selectedSaleForPrint.amount)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px', fontWeight: 'bold' }}>
+                <span>Total Amount:</span>
+                <span>{formatCurrency(selectedSaleForPrint.amount)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '3px' }}>
+                <span>Status:</span>
+                <span>{selectedSaleForPrint.payment_status}</span>
+              </div>
+            </div>
+
+            <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+            {selectedSaleForPrint.notes && (
+              <div style={{ fontSize: '10px', marginBottom: '8px', fontStyle: 'italic' }}>
+                Notes: {selectedSaleForPrint.notes}
+              </div>
+            )}
+
+            <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '8px' }}>
+              Printed: {new Date().toLocaleString('en-IN')}
+            </div>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>POULTRY TRADER APP</div>
+            <div style={{ borderBottom: '1px solid black' }}></div>
+          </div>
+        )}
+      </div>
+
       <StatusBar user={user} onLogout={onLogout} />
       <div className="main-content container">
         {error && <div className="alert alert-error">{error}</div>}
@@ -595,7 +690,17 @@ function Sales({ user, onLogout }) {
                   Amount: {formatCurrency(sale.amount)}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  <button
+                    onClick={() => {
+                      setSelectedSaleForPrint(sale);
+                      setTimeout(() => handleThermalPrint(), 0);
+                    }}
+                    className="btn btn-small"
+                    style={{ background: '#34495e', color: 'white' }}
+                  >
+                    🖨️ Print
+                  </button>
                   <button
                     onClick={() => handleEdit(sale)}
                     className="btn btn-small"
