@@ -56,6 +56,10 @@ router.get('/daily/:date', async (req, res) => {
       customerSales[s.customer_id].amount += s.amount;
     });
 
+    Object.values(customerSales).forEach(cs => {
+      cs.rate = cs.quantity > 0 ? Math.round((cs.amount / cs.quantity) * 100) / 100 : 0;
+    });
+
     const report = {
       date,
       business: 'JAI HIND POULTRY',
