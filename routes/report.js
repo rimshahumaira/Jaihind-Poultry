@@ -62,7 +62,7 @@ router.get('/daily/:date', async (req, res) => {
 
     const report = {
       date,
-      business: 'JAI HIND POULTRY',
+      business: 'POULTRY TRADER APP',
       purchase: {
         totalKg: Math.round(totalPurchasedKg * 100) / 100,
         totalAmount: Math.round(totalPurchaseAmount * 100) / 100,
@@ -140,7 +140,7 @@ router.get('/text-report/:date', async (req, res) => {
       customerSalesMap[s.customer_name].rate = s.rate;
     });
 
-    let report = `JAI HIND POULTRY
+    let report = `POULTRY TRADER APP
 ${date}
 
 ════════════════════════════════════════

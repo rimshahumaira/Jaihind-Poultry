@@ -1,7 +1,7 @@
 {
-  "name": "jai-hind-poultry",
+  "name": "poultry-trader-app",
   "version": "1.0.0",
-  "description": "Mobile-first poultry wholesale billing and inventory management app",
+  "description": "Mobile-first poultry wholesale billing, inventory, and payment management app",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

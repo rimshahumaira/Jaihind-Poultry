@@ -62,7 +62,7 @@ function Reports({ user, onLogout }) {
   const reportContent = report && (
     <div style={{ fontFamily: 'monospace', lineHeight: '1.6', whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
       <div style={{ textAlign: 'center', marginBottom: '20px', fontSize: '16px', fontWeight: 'bold' }}>
-        JAI HIND POULTRY
+        POULTRY TRADER APP
       </div>
       <div style={{ textAlign: 'center', marginBottom: '20px', fontSize: '14px' }}>
         Daily Business Report

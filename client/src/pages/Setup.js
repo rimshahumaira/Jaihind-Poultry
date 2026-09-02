@@ -50,7 +50,7 @@ function Setup({ onSetup }) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)', padding: '20px' }}>
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '36px', color: 'white', marginBottom: '8px' }}>🐔 JAI HIND POULTRY</h1>
+        <h1 style={{ fontSize: '36px', color: 'white', marginBottom: '8px' }}>🐔 POULTRY TRADER APP</h1>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Initial Setup</p>
       </div>
 
@@ -65,7 +65,7 @@ function Setup({ onSetup }) {
             type="text"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
-            placeholder="e.g., Jai Hind Poultry"
+            placeholder="e.g., Poultry Trader App"
             autoFocus
           />
         </div>
