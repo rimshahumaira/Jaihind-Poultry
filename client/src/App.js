@@ -12,6 +12,7 @@ import Reports from './pages/Reports';
 import Customers from './pages/Customers';
 import Suppliers from './pages/Suppliers';
 import Expenses from './pages/Expenses';
+import Collections from './pages/Collections';
 import CustomerLedger from './pages/CustomerLedger';
 
 const API = axios.create({
@@ -98,6 +99,7 @@ function App() {
           <Route path="/customers" element={<Customers user={user} onLogout={handleLogout} />} />
           <Route path="/suppliers" element={<Suppliers user={user} onLogout={handleLogout} />} />
           <Route path="/expenses" element={<Expenses user={user} onLogout={handleLogout} />} />
+          <Route path="/collections" element={<Collections user={user} onLogout={handleLogout} />} />
           <Route path="/customer/:id/ledger" element={<CustomerLedger user={user} onLogout={handleLogout} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

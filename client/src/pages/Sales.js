@@ -12,6 +12,13 @@ function Sales({ user, onLogout }) {
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [activeTab, setActiveTab] = useState('sales');
+  const [paymentFormData, setPaymentFormData] = useState({
+    customer_id: '',
+    amount: '',
+    notes: ''
+  });
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState('');
@@ -169,6 +176,41 @@ function Sales({ user, onLogout }) {
     return '₹' + (Math.round(amount * 100) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 });
   };
 
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!paymentFormData.customer_id) {
+      setError('Please select a customer');
+      return;
+    }
+
+    if (!paymentFormData.amount || isNaN(paymentFormData.amount) || paymentFormData.amount <= 0) {
+      setError('Please enter a valid payment amount');
+      return;
+    }
+
+    try {
+      setProcessingPayment(true);
+      await API.post(`/customer/${paymentFormData.customer_id}/pay`, {
+        amount: parseFloat(paymentFormData.amount),
+        notes: paymentFormData.notes
+      });
+
+      setSuccess(`Payment of ${formatCurrency(paymentFormData.amount)} recorded successfully`);
+      setPaymentFormData({
+        customer_id: '',
+        amount: '',
+        notes: ''
+      });
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to record payment');
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
   const totalAmount = sales.reduce((sum, s) => sum + s.amount, 0);
   const totalWeight = sales.reduce((sum, s) => sum + s.weight, 0);
 
@@ -179,22 +221,57 @@ function Sales({ user, onLogout }) {
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
-        <div className="mb-3">
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #bdc3c7' }}
-          />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+          <button
+            onClick={() => setActiveTab('sales')}
+            style={{
+              padding: '12px',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: '600',
+              background: activeTab === 'sales' ? '#3498db' : '#ecf0f1',
+              color: activeTab === 'sales' ? 'white' : '#2c3e50'
+            }}
+          >
+            💰 New Sale
+          </button>
+          <button
+            onClick={() => setActiveTab('payment')}
+            style={{
+              padding: '12px',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: '600',
+              background: activeTab === 'payment' ? '#27ae60' : '#ecf0f1',
+              color: activeTab === 'payment' ? 'white' : '#2c3e50'
+            }}
+          >
+            💳 Receive Payment
+          </button>
         </div>
 
-        {!showForm && (
-          <button className="btn btn-success btn-block mb-3" onClick={() => setShowForm(true)}>
-            + Add New Sale
-          </button>
+        {activeTab === 'sales' && (
+          <>
+            <div className="mb-3">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #bdc3c7' }}
+              />
+            </div>
+
+            {!showForm && (
+              <button className="btn btn-success btn-block mb-3" onClick={() => setShowForm(true)}>
+                + Add New Sale
+              </button>
+            )}
+          </>
         )}
 
-        {showForm && (
+        {activeTab === 'sales' && showForm && (
           <div className="card mb-3">
             <div className="card-header">
               {editingId ? 'Edit Sale' : 'New Sale Entry'}
@@ -396,8 +473,74 @@ function Sales({ user, onLogout }) {
           </div>
         )}
 
+        {/* Payment Form */}
+        {activeTab === 'payment' && (
+          <div className="card mb-3">
+            <div className="card-header">Receive Payment from Customer</div>
+            <form onSubmit={handlePaymentSubmit}>
+              <div className="input-group">
+                <label>Customer *</label>
+                <select
+                  value={paymentFormData.customer_id}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, customer_id: e.target.value })}
+                  required
+                >
+                  <option value="">-- Select Customer --</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} (Outstanding: {formatCurrency(c.outstanding_amount)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="input-group">
+                <label>Amount to Receive (₹) *</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={paymentFormData.amount}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, amount: e.target.value })}
+                  placeholder="0.00"
+                  step="0.01"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="input-group">
+                <label>Notes (Payment Method)</label>
+                <input
+                  type="text"
+                  value={paymentFormData.notes}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, notes: e.target.value })}
+                  placeholder="e.g., Cash, Check, Online transfer"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <button
+                  type="submit"
+                  className="btn btn-success"
+                  disabled={processingPayment}
+                >
+                  {processingPayment ? 'Recording...' : '✓ Record Payment'}
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => setPaymentFormData({ customer_id: '', amount: '', notes: '' })}
+                  style={{ background: '#bdc3c7', color: 'white' }}
+                >
+                  Clear
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {/* Summary */}
-        {sales.length > 0 && (
+        {activeTab === 'sales' && sales.length > 0 && (
           <div className="card" style={{ backgroundColor: '#f0f0f0', marginBottom: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', textAlign: 'center' }}>
               <div>
@@ -413,17 +556,19 @@ function Sales({ user, onLogout }) {
         )}
 
         {/* Sales List */}
-        {loading ? (
-          <div className="loading">
-            <div className="spinner"></div>
-          </div>
-        ) : sales.length === 0 ? (
-          <div className="card" style={{ textAlign: 'center', color: '#999' }}>
-            No sales recorded for this date
-          </div>
-        ) : (
-          <div>
-            {sales.map(sale => (
+        {activeTab === 'sales' && (
+          <>
+            {loading ? (
+              <div className="loading">
+                <div className="spinner"></div>
+              </div>
+            ) : sales.length === 0 ? (
+              <div className="card" style={{ textAlign: 'center', color: '#999' }}>
+                No sales recorded for this date
+              </div>
+            ) : (
+              <div>
+                {sales.map(sale => (
               <div key={sale.id} className="card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
                   <div>
@@ -467,8 +612,10 @@ function Sales({ user, onLogout }) {
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

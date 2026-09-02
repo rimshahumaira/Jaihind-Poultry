@@ -112,11 +112,20 @@ function Customers({ user, onLogout }) {
           />
         </div>
 
-        {!showForm && (
-          <button className="btn btn-success btn-block mb-3" onClick={() => setShowForm(true)}>
-            + Add New Customer
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+          {!showForm && (
+            <button className="btn btn-success" onClick={() => setShowForm(true)}>
+              + Add Customer
+            </button>
+          )}
+          <button
+            className="btn"
+            onClick={() => navigate('/collections')}
+            style={{ background: '#27ae60', color: 'white' }}
+          >
+            💳 Collections
           </button>
-        )}
+        </div>
 
         {showForm && (
           <div className="card mb-3">
