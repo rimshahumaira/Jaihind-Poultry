@@ -251,15 +251,26 @@ function Reports({ user, onLogout }) {
                   <div style={{ fontWeight: '600', marginTop: '16px', marginBottom: '12px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
                     Customer-wise Breakdown
                   </div>
+
+                  {/* Header Row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1.5fr 1.5fr', gap: '12px', marginBottom: '12px', paddingBottom: '8px', borderBottom: '2px solid #2c3e50', fontWeight: '600', fontSize: '13px', color: '#2c3e50' }}>
+                    <div>Customer</div>
+                    <div style={{ textAlign: 'center' }}>Quantity</div>
+                    <div style={{ textAlign: 'center' }}>Rate/kg</div>
+                    <div style={{ textAlign: 'right' }}>Total</div>
+                  </div>
+
+                  {/* Data Rows */}
                   {report.sales.customerSales.map((sale, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid #eee' }}>
-                      <div>
-                        <div style={{ fontWeight: '500' }}>{sale.name}</div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>
-                          {formatQuantity(sale.quantity)} kg @ {formatCurrency(sale.rate)}/kg
-                        </div>
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1.5fr 1.5fr', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid #eee', alignItems: 'center' }}>
+                      <div style={{ fontWeight: '500' }}>{sale.name}</div>
+                      <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: '600' }}>
+                        {formatQuantity(sale.quantity)} kg
                       </div>
-                      <div style={{ fontWeight: '600', textAlign: 'right' }}>
+                      <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: '600', color: '#3498db' }}>
+                        ₹{(Math.round(sale.rate * 100) / 100).toFixed(2)}
+                      </div>
+                      <div style={{ textAlign: 'right', fontSize: '14px', fontWeight: '600', color: '#27ae60' }}>
                         {formatCurrency(sale.amount)}
                       </div>
                     </div>
