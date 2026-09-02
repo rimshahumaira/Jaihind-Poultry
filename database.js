@@ -132,16 +132,34 @@ const dbAsync = {
         db.run(`
           CREATE TABLE IF NOT EXISTS payments (
             id TEXT PRIMARY KEY,
-            sale_id TEXT NOT NULL,
+            sale_id TEXT,
             customer_id TEXT NOT NULL,
             amount REAL NOT NULL,
             date DATE NOT NULL,
+            notes TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (sale_id) REFERENCES sales(id),
             FOREIGN KEY (customer_id) REFERENCES customers(id)
           )
         `, (err) => {
           if (err && !err.message.includes('already exists')) reject(err);
+        });
+
+        // Alter payments table to add notes column if it doesn't exist
+        db.run(`
+          PRAGMA table_info(payments);
+        `, (err, columns) => {
+          if (!err) {
+            db.all(`PRAGMA table_info(payments)`, (err, columns) => {
+              if (columns && !columns.some(c => c.name === 'notes')) {
+                db.run(`ALTER TABLE payments ADD COLUMN notes TEXT`, (err) => {
+                  if (err && !err.message.includes('already exists') && !err.message.includes('duplicate')) {
+                    console.log('Added notes column to payments table');
+                  }
+                });
+              }
+            });
+          }
         });
 
         // Daily summaries table
