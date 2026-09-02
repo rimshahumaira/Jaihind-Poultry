@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+package-lock.json
+client/node_modules/
+client/package-lock.json
+
+# Runtime files
+poultry.db
+poultry.db-journal
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+client/build/
+dist/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Backups
+*.bak
+backups/
