@@ -289,25 +289,27 @@ function Reports({ user, onLogout }) {
               </div>
             </div>
 
-            {/* Customer Breakdown - Condensed */}
+            {/* Customer Breakdown - All Customers */}
             {report.sales.customerSales.length > 0 && (
-              <div style={{ marginBottom: '10px' }}>
-                <div style={{ fontSize: '11px', fontWeight: '700', color: '#2c3e50', marginBottom: '6px', paddingBottom: '4px', borderBottom: '1px solid #ddd' }}>
-                  👥 Customer-wise Sales
+              <div style={{ marginBottom: '8px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#2c3e50', marginBottom: '4px', paddingBottom: '3px', borderBottom: '1px solid #ddd' }}>
+                  👥 CUSTOMER SALES
                 </div>
-                <div style={{ fontSize: '9px' }}>
-                  {report.sales.customerSales.slice(0, 4).map((sale, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '3px', borderBottom: idx < Math.min(3, report.sales.customerSales.length - 1) ? '1px solid #eee' : 'none' }}>
-                      <span>{sale.name}</span>
-                      <span>{formatQuantity(sale.quantity)}kg @ ₹{(Math.round(sale.rate * 100) / 100).toFixed(2)}</span>
-                      <span style={{ fontWeight: '600' }}>{formatCurrency(sale.amount)}</span>
+                <div style={{ fontSize: '8px', lineHeight: '1.2' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 0.8fr 0.6fr 1fr', gap: '4px', marginBottom: '2px', paddingBottom: '2px', borderBottom: '0.5px solid #ccc', fontWeight: '600', color: '#555' }}>
+                    <div>Name</div>
+                    <div style={{ textAlign: 'center' }}>Qty</div>
+                    <div style={{ textAlign: 'center' }}>Rate</div>
+                    <div style={{ textAlign: 'right' }}>Total</div>
+                  </div>
+                  {report.sales.customerSales.map((sale, idx) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 0.8fr 0.6fr 1fr', gap: '4px', paddingBottom: '1px', borderBottom: idx < report.sales.customerSales.length - 1 ? '0.5px solid #f0f0f0' : 'none' }}>
+                      <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sale.name}</div>
+                      <div style={{ textAlign: 'center' }}>{(Math.round(sale.quantity * 100) / 100).toFixed(2)}</div>
+                      <div style={{ textAlign: 'center' }}>₹{(Math.round(sale.rate * 100) / 100).toFixed(0)}</div>
+                      <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{(Math.round(sale.amount * 100) / 100).toFixed(0)}</div>
                     </div>
                   ))}
-                  {report.sales.customerSales.length > 4 && (
-                    <div style={{ paddingTop: '3px', color: '#999', fontStyle: 'italic' }}>
-                      +{report.sales.customerSales.length - 4} more customers
-                    </div>
-                  )}
                 </div>
               </div>
             )}
