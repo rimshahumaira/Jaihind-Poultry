@@ -111,14 +111,15 @@ router.get('/:id/ledger', async (req, res) => {
 
 router.post('/:id/pay', async (req, res) => {
   try {
-    const { amount, saleId, notes } = req.body;
+    const { amount, saleId, notes, payment_date } = req.body;
     const paymentId = uuidv4();
+    const paymentReceivedDate = payment_date || new Date().toISOString().split('T')[0];
 
     // Insert payment record (sale_id can be NULL for general payments)
     await db.run(
       `INSERT INTO payments (id, sale_id, customer_id, amount, date, notes)
-       VALUES (?, ?, ?, ?, DATE('now'), ?)`,
-      [paymentId, saleId || null, req.params.id, amount, notes || null]
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [paymentId, saleId || null, req.params.id, amount, paymentReceivedDate, notes || null]
     );
 
     // Update customer outstanding amount

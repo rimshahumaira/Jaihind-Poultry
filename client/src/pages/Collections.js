@@ -18,6 +18,7 @@ function Collections({ user, onLogout }) {
 
   const [formData, setFormData] = useState({
     amount: '',
+    payment_date: new Date().toISOString().split('T')[0],
     notes: ''
   });
 
@@ -43,7 +44,7 @@ function Collections({ user, onLogout }) {
 
   const handleCustomerSelect = async (customerId) => {
     setSelectedCustomerId(customerId);
-    setFormData({ amount: '', notes: '' });
+    setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '' });
     setSuccess('');
     setError('');
 
@@ -84,20 +85,21 @@ function Collections({ user, onLogout }) {
       setProcessing(true);
       await API.post(`/customer/${selectedCustomerId}/pay`, {
         amount,
+        payment_date: formData.payment_date,
         notes: formData.notes
       });
 
       setSuccess(`Payment of ₹${(Math.round(amount * 100) / 100).toFixed(2)} recorded successfully`);
 
       const newPayment = {
-        date: new Date().toISOString().split('T')[0],
+        date: formData.payment_date,
         amount,
         notes: formData.notes
       };
       setReceivedPayments([newPayment, ...receivedPayments]);
       setLastPayment(newPayment);
 
-      setFormData({ amount: '', notes: '' });
+      setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '' });
 
       await handleCustomerSelect(selectedCustomerId);
     } catch (err) {
@@ -309,7 +311,7 @@ function Collections({ user, onLogout }) {
                 setSelectedCustomerId('');
                 setLedger(null);
                 setSelectedCustomer(null);
-                setFormData({ amount: '', notes: '' });
+                setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '' });
                 setReceivedPayments([]);
               }}
               style={{
@@ -379,6 +381,16 @@ function Collections({ user, onLogout }) {
                   />
                 </div>
 
+                <div className="input-group">
+                  <label>Payment Received Date *</label>
+                  <input
+                    type="date"
+                    value={formData.payment_date}
+                    onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
+                    required
+                  />
+                </div>
+
                 {formData.amount && selectedCustomer && (
                   <div style={{ backgroundColor: '#f0f0f0', padding: '12px', borderRadius: '6px', marginBottom: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -416,7 +428,7 @@ function Collections({ user, onLogout }) {
                     type="button"
                     className="btn"
                     onClick={() => {
-                      setFormData({ amount: '', notes: '' });
+                      setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '' });
                     }}
                     style={{ background: '#bdc3c7', color: 'white' }}
                   >
