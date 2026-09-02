@@ -37,6 +37,11 @@ function Reports({ user, onLogout }) {
     return (Math.round(qty * 100) / 100).toFixed(2);
   };
 
+  const formatDateWithDay = (dateString) => {
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
   const handleExportCSV = async (type) => {
     try {
       const res = await API.post(`/report/export-csv/${type}`, {
@@ -80,7 +85,7 @@ function Reports({ user, onLogout }) {
         Daily Business Report
       </div>
       <div style={{ textAlign: 'center', marginBottom: '30px', fontSize: '14px' }}>
-        Date: {date}
+        {formatDateWithDay(date)}
       </div>
 
       <div style={{ marginBottom: '20px', borderBottom: '1px solid #ddd', paddingBottom: '10px' }}>
@@ -167,7 +172,7 @@ function Reports({ user, onLogout }) {
                 Daily Business Report
               </div>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#34495e' }}>
-                Date: {date}
+                {formatDateWithDay(date)}
               </div>
             </div>
 
