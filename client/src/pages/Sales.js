@@ -13,6 +13,11 @@ function Sales({ user, onLogout }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerRate, setNewCustomerRate] = useState('');
+
   const [formData, setFormData] = useState({
     date: date,
     customer_id: '',
@@ -59,6 +64,38 @@ function Sales({ user, onLogout }) {
       customer_name: customer?.name || '',
       rate: customer?.default_sale_rate || ''
     });
+  };
+
+  const handleAddNewCustomer = async () => {
+    if (!newCustomerName.trim()) {
+      setError('Customer name is required');
+      return;
+    }
+
+    try {
+      const res = await API.post('/customer', {
+        name: newCustomerName,
+        phone: newCustomerPhone || null,
+        default_sale_rate: parseFloat(newCustomerRate) || 0
+      });
+
+      setFormData({
+        ...formData,
+        customer_id: res.data.id,
+        customer_name: res.data.name,
+        rate: res.data.default_sale_rate || ''
+      });
+
+      setNewCustomerName('');
+      setNewCustomerPhone('');
+      setNewCustomerRate('');
+      setShowNewCustomer(false);
+      setSuccess('Customer added successfully');
+      loadCustomers();
+      setError('');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to add customer');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -162,21 +199,104 @@ function Sales({ user, onLogout }) {
             <div className="card-header">
               {editingId ? 'Edit Sale' : 'New Sale Entry'}
             </div>
-            <form onSubmit={handleSubmit}>
-              <div className="input-group">
-                <label>Customer *</label>
-                <select
-                  value={formData.customer_id}
-                  onChange={handleCustomerSelect}
-                  required
-                >
-                  <option value="">Select or add customer</option>
-                  {customers.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
 
+            {!showNewCustomer && (
+              <>
+                <div className="input-group">
+                  <label>Customer *</label>
+                  <select
+                    value={formData.customer_id}
+                    onChange={handleCustomerSelect}
+                  >
+                    <option value="">-- Select existing customer --</option>
+                    {customers.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowNewCustomer(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#3498db',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    fontSize: '14px',
+                    marginBottom: '16px'
+                  }}
+                >
+                  + Add New Customer
+                </button>
+              </>
+            )}
+
+            {showNewCustomer && (
+              <div style={{ background: '#f0f0f0', padding: '12px', borderRadius: '6px', marginBottom: '16px' }}>
+                <div style={{ fontWeight: '600', marginBottom: '12px' }}>Quick Add Customer</div>
+
+                <div className="input-group">
+                  <label>Name *</label>
+                  <input
+                    type="text"
+                    value={newCustomerName}
+                    onChange={(e) => setNewCustomerName(e.target.value)}
+                    placeholder="Customer name"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>Phone (optional)</label>
+                  <input
+                    type="tel"
+                    value={newCustomerPhone}
+                    onChange={(e) => setNewCustomerPhone(e.target.value)}
+                    placeholder="Mobile number"
+                    inputMode="tel"
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>Default Rate (₹/kg)</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={newCustomerRate}
+                    onChange={(e) => setNewCustomerRate(e.target.value)}
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={handleAddNewCustomer}
+                    className="btn btn-success"
+                    style={{ fontSize: '14px' }}
+                  >
+                    Save & Use
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewCustomer(false);
+                      setNewCustomerName('');
+                      setNewCustomerPhone('');
+                      setNewCustomerRate('');
+                    }}
+                    style={{ background: '#bdc3c7', color: 'white', padding: '12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
               <div className="input-group">
                 <label>Customer Name *</label>
                 <input
@@ -253,6 +373,10 @@ function Sales({ user, onLogout }) {
                   onClick={() => {
                     setShowForm(false);
                     setEditingId(null);
+                    setShowNewCustomer(false);
+                    setNewCustomerName('');
+                    setNewCustomerPhone('');
+                    setNewCustomerRate('');
                     setFormData({
                       date: date,
                       customer_id: '',
