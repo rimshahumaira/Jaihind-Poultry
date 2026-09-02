@@ -1,0 +1,26 @@
+{
+  "name": "jai-hind-poultry",
+  "version": "1.0.0",
+  "description": "Mobile-first poultry wholesale billing and inventory management app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "nodemon server.js",
+    "client:dev": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "uuid": "^9.0.0",
+    "express-validator": "^7.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0",
+    "nodemon": "^2.0.22"
+  }
+}
