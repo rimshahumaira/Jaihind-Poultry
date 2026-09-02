@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API } from '../App';
 import StatusBar from '../components/StatusBar';
@@ -6,6 +6,7 @@ import StatusBar from '../components/StatusBar';
 function CustomerLedger({ user, onLogout }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const printRef = useRef();
   const [ledger, setLedger] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,6 +43,17 @@ function CustomerLedger({ user, onLogout }) {
     return (Math.round(qty * 100) / 100).toFixed(2);
   };
 
+  const handleThermalPrint = () => {
+    const printWindow = window.open('', '', 'width=800,height=600');
+    printWindow.document.write(printRef.current.innerHTML);
+    printWindow.document.close();
+
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 250);
+  };
+
   if (loading) {
     return (
       <>
@@ -72,10 +84,91 @@ function CustomerLedger({ user, onLogout }) {
   return (
     <>
       <StatusBar user={user} onLogout={onLogout} />
+
+      {/* Thermal Receipt - Hidden, used for printing */}
+      <div ref={printRef} style={{ display: 'none' }}>
+        <div style={{
+          fontFamily: 'monospace',
+          fontSize: '12px',
+          lineHeight: '1.2',
+          padding: '5mm',
+          maxWidth: '80mm',
+          whiteSpace: 'pre-wrap',
+          wordWrap: 'break-word',
+          backgroundColor: 'white',
+          color: 'black'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '5px' }}>POULTRY TRADER APP</div>
+          <div style={{ textAlign: 'center', marginBottom: '10px', fontSize: '11px' }}>SALES STATEMENT</div>
+          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+          <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+            <div>Customer: {ledger.customer.name}</div>
+            <div>Phone:    {ledger.customer.phone}</div>
+            <div>Date:     {fromDate && toDate ? `${fromDate} to ${toDate}` : new Date().toISOString().split('T')[0]}</div>
+          </div>
+
+          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+          <div style={{ marginBottom: '8px', fontSize: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.2fr 0.8fr 1.5fr', gap: '0px', marginBottom: '4px' }}>
+              <div>Date</div>
+              <div style={{ textAlign: 'center' }}>Weight</div>
+              <div style={{ textAlign: 'center' }}>Rate</div>
+              <div style={{ textAlign: 'right' }}>Amount</div>
+            </div>
+            <div style={{ borderBottom: '1px solid black', marginBottom: '4px' }}></div>
+            {ledger.sales.map((sale, idx) => (
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.2fr 0.8fr 1.5fr', gap: '0px', marginBottom: '2px' }}>
+                <div>{sale.date}</div>
+                <div style={{ textAlign: 'center' }}>{formatQuantity(sale.weight)}kg</div>
+                <div style={{ textAlign: 'center' }}>₹{(Math.round(sale.rate * 100) / 100).toFixed(2)}</div>
+                <div style={{ textAlign: 'right' }}>{formatCurrency(sale.amount)}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+          <div style={{ marginBottom: '8px', fontSize: '11px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+              <span>TOTAL WEIGHT:</span>
+              <span>{formatQuantity(ledger.totalQuantity)} KG</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+              <span>TOTAL SALES:</span>
+              <span>{formatCurrency(ledger.totalAmount)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+              <span>PAID:</span>
+              <span>{formatCurrency(ledger.totalPaid)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+              <span>DUE:</span>
+              <span>{formatCurrency(ledger.outstandingBalance)}</span>
+            </div>
+          </div>
+
+          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+
+          <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '8px' }}>
+            Printed: {new Date().toLocaleString('en-IN')}
+          </div>
+
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>POULTRY TRADER APP</div>
+          <div style={{ borderBottom: '1px solid black' }}></div>
+        </div>
+      </div>
+
       <div className="main-content container">
-        <button onClick={() => navigate('/customers')} className="btn btn-secondary btn-block mb-3">
-          ← Back to Customers
-        </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+          <button onClick={() => navigate('/customers')} className="btn btn-secondary btn-block">
+            ← Back to Customers
+          </button>
+          <button onClick={handleThermalPrint} className="btn btn-block" style={{ background: '#34495e', color: 'white' }}>
+            🖨️ Thermal Print
+          </button>
+        </div>
 
         {/* Customer Info */}
         <div className="card mb-3">
