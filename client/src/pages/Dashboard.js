@@ -93,6 +93,12 @@ function Dashboard({ user, onLogout }) {
               <button className="btn btn-secondary btn-block" onClick={() => navigate('/reports')} style={{ fontSize: '14px' }}>
                 📊 View Report
               </button>
+              <button className="btn" style={{ fontSize: '14px', background: '#9b59b6', color: 'white' }} onClick={() => navigate('/customers')}>
+                👥 Manage Customers
+              </button>
+              <button className="btn" style={{ fontSize: '14px', background: '#3498db', color: 'white' }} onClick={() => navigate('/collections')}>
+                💰 Collections
+              </button>
             </div>
 
             {/* Sales & Purchase */}
