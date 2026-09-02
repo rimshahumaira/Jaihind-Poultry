@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { API } from '../App';
 import Navigation from '../components/Navigation';
 import StatusBar from '../components/StatusBar';
 
 function Reports({ user, onLogout }) {
+  const printRef = useRef();
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +58,17 @@ function Reports({ user, onLogout }) {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleStyledPrint = () => {
+    const printWindow = window.open('', '', 'width=900,height=700');
+    printWindow.document.write(printRef.current.innerHTML);
+    printWindow.document.close();
+
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 250);
   };
 
   const reportContent = report && (
@@ -133,6 +145,162 @@ function Reports({ user, onLogout }) {
 
   return (
     <>
+      {/* Stylized Report - Hidden, used for printing */}
+      <div ref={printRef} style={{ display: 'none' }}>
+        {report && (
+          <div style={{
+            fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
+            fontSize: '13px',
+            lineHeight: '1.8',
+            padding: '20px',
+            backgroundColor: 'white',
+            color: '#2c3e50',
+            maxWidth: '8.5in',
+            margin: '0 auto'
+          }}>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '3px solid #3498db', paddingBottom: '20px' }}>
+              <div style={{ fontSize: '28px', fontWeight: '700', color: '#2c3e50', marginBottom: '5px' }}>
+                POULTRY TRADER APP
+              </div>
+              <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '10px' }}>
+                Daily Business Report
+              </div>
+              <div style={{ fontSize: '13px', fontWeight: '600', color: '#34495e' }}>
+                Date: {date}
+              </div>
+            </div>
+
+            {/* Purchase Section */}
+            <div style={{ marginBottom: '25px' }}>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: '#2c3e50', marginBottom: '12px', paddingBottom: '8px', borderBottom: '2px solid #e8f4f8' }}>
+                📦 PURCHASE SUMMARY
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                <div style={{ backgroundColor: '#ecf0f1', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '5px' }}>Total Purchased</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50' }}>{formatQuantity(report.purchase.totalKg)} kg</div>
+                </div>
+                <div style={{ backgroundColor: '#ecf0f1', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '5px' }}>Purchase Amount</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50' }}>{formatCurrency(report.purchase.totalAmount)}</div>
+                </div>
+                <div style={{ backgroundColor: '#ecf0f1', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '5px' }}>Avg Purchase Rate</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50' }}>{formatCurrency(report.purchase.avgRate)}/kg</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sales Section */}
+            <div style={{ marginBottom: '25px' }}>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: '#2c3e50', marginBottom: '12px', paddingBottom: '8px', borderBottom: '2px solid #e8f4f8' }}>
+                💰 SALES SUMMARY
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                <div style={{ backgroundColor: '#ecf0f1', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '5px' }}>Total Sold</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#27ae60' }}>{formatQuantity(report.sales.totalKg)} kg</div>
+                </div>
+                <div style={{ backgroundColor: '#ecf0f1', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '5px' }}>Total Sales</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#27ae60' }}>{formatCurrency(report.sales.totalAmount)}</div>
+                </div>
+                <div style={{ backgroundColor: '#ecf0f1', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '5px' }}>Avg Sale Rate</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#27ae60' }}>{formatCurrency(report.sales.avgRate)}/kg</div>
+                </div>
+              </div>
+
+              {report.sales.customerSales.length > 0 && (
+                <div style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#2c3e50', marginBottom: '10px' }}>Customer-wise Breakdown:</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.2fr 1.2fr', gap: '12px', fontSize: '11px', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #ddd' }}>
+                    <div style={{ fontWeight: '600' }}>Customer</div>
+                    <div style={{ fontWeight: '600', textAlign: 'center' }}>Qty (kg)</div>
+                    <div style={{ fontWeight: '600', textAlign: 'center' }}>Rate/kg</div>
+                    <div style={{ fontWeight: '600', textAlign: 'right' }}>Total</div>
+                  </div>
+                  {report.sales.customerSales.map((sale, idx) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.2fr 1.2fr', gap: '12px', fontSize: '11px', paddingBottom: '6px', marginBottom: '6px', borderBottom: idx < report.sales.customerSales.length - 1 ? '1px solid #eee' : 'none' }}>
+                      <div>{sale.name}</div>
+                      <div style={{ textAlign: 'center' }}>{formatQuantity(sale.quantity)}</div>
+                      <div style={{ textAlign: 'center' }}>₹{(Math.round(sale.rate * 100) / 100).toFixed(2)}</div>
+                      <div style={{ textAlign: 'right' }}>{formatCurrency(sale.amount)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Expenses Section */}
+            <div style={{ marginBottom: '25px' }}>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: '#2c3e50', marginBottom: '12px', paddingBottom: '8px', borderBottom: '2px solid #e8f4f8' }}>
+                💸 EXPENSES
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
+                <div style={{ backgroundColor: '#fef3e1', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '4px' }}>Labour</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#2c3e50' }}>{formatCurrency(report.expenses.labour)}</div>
+                </div>
+                <div style={{ backgroundColor: '#fef3e1', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '4px' }}>Fuel</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#2c3e50' }}>{formatCurrency(report.expenses.fuel)}</div>
+                </div>
+                <div style={{ backgroundColor: '#fef3e1', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '4px' }}>Misc</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#2c3e50' }}>{formatCurrency(report.expenses.miscellaneous)}</div>
+                </div>
+                <div style={{ backgroundColor: '#fef3e1', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '4px' }}>Other</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#2c3e50' }}>{formatCurrency(report.expenses.other)}</div>
+                </div>
+              </div>
+              <div style={{ backgroundColor: '#f0f0f0', padding: '12px', borderRadius: '6px', marginTop: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '4px' }}>Total Expenses</div>
+                <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50' }}>{formatCurrency(report.expenses.total)}</div>
+              </div>
+            </div>
+
+            {/* Profit Section */}
+            <div style={{ marginBottom: '25px' }}>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: '#2c3e50', marginBottom: '12px', paddingBottom: '8px', borderBottom: '2px solid #e8f4f8' }}>
+                📊 PROFIT SUMMARY
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                <div style={{ backgroundColor: '#e8f5e9', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '5px' }}>Gross Profit</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#27ae60' }}>{formatCurrency(report.profit.grossProfit)}</div>
+                </div>
+                <div style={{ backgroundColor: '#ffebee', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '5px' }}>Total Expenses</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#e74c3c' }}>{formatCurrency(report.expenses.total)}</div>
+                </div>
+              </div>
+              <div style={{ backgroundColor: report.profit.netProfit >= 0 ? '#e8f5e9' : '#ffebee', padding: '16px', borderRadius: '6px', textAlign: 'center', border: '2px solid ' + (report.profit.netProfit >= 0 ? '#27ae60' : '#e74c3c') }}>
+                <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '8px' }}>Net Profit</div>
+                <div style={{ fontSize: '24px', fontWeight: '700', color: report.profit.netProfit >= 0 ? '#27ae60' : '#e74c3c', marginBottom: '8px' }}>
+                  {formatCurrency(report.profit.netProfit)}
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: '#2c3e50' }}>
+                  Margin: {formatQuantity(report.profit.netProfitMargin)}%
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ textAlign: 'center', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
+              <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '8px' }}>
+                Generated by Poultry Trader App
+              </div>
+              <div style={{ fontSize: '10px', color: '#bdc3c7' }}>
+                Printed on {new Date().toLocaleString('en-IN')}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       <StatusBar user={user} onLogout={onLogout} />
       <div className="main-content container">
         {error && <div className="alert alert-error">{error}</div>}
@@ -155,11 +323,11 @@ function Reports({ user, onLogout }) {
             {/* Action Buttons */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
               <button
-                onClick={handlePrint}
+                onClick={handleStyledPrint}
                 className="btn btn-primary"
                 style={{ fontSize: '14px' }}
               >
-                🖨️ Print Report
+                🖨️ Print Styled Report
               </button>
               <button
                 onClick={() => setPrintView(true)}
