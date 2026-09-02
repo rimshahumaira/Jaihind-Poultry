@@ -65,6 +65,7 @@ const dbAsync = {
             customer_name TEXT NOT NULL,
             cage_lot_number TEXT,
             weight REAL NOT NULL,
+            bird_count INTEGER DEFAULT 0,
             rate REAL NOT NULL,
             amount REAL NOT NULL,
             payment_status TEXT DEFAULT 'Pending',
@@ -77,6 +78,19 @@ const dbAsync = {
           if (err && !err.message.includes('already exists')) reject(err);
         });
 
+        // Add bird_count column to sales if it doesn't exist
+        db.run(`PRAGMA table_info(sales)`, (err, columns) => {
+          if (!err && columns) {
+            db.all(`PRAGMA table_info(sales)`, (err, columns) => {
+              if (columns && !columns.some(c => c.name === 'bird_count')) {
+                db.run(`ALTER TABLE sales ADD COLUMN bird_count INTEGER DEFAULT 0`, (err) => {
+                  if (!err) console.log('Added bird_count column to sales table');
+                });
+              }
+            });
+          }
+        });
+
         // Purchases table
         db.run(`
           CREATE TABLE IF NOT EXISTS purchases (
@@ -85,6 +99,7 @@ const dbAsync = {
             supplier_id TEXT,
             supplier_name TEXT NOT NULL,
             weight REAL NOT NULL,
+            bird_count INTEGER DEFAULT 0,
             rate REAL NOT NULL,
             amount REAL NOT NULL,
             cage_lot_number TEXT,
@@ -95,6 +110,19 @@ const dbAsync = {
           )
         `, (err) => {
           if (err && !err.message.includes('already exists')) reject(err);
+        });
+
+        // Add bird_count column to purchases if it doesn't exist
+        db.run(`PRAGMA table_info(purchases)`, (err, columns) => {
+          if (!err && columns) {
+            db.all(`PRAGMA table_info(purchases)`, (err, columns) => {
+              if (columns && !columns.some(c => c.name === 'bird_count')) {
+                db.run(`ALTER TABLE purchases ADD COLUMN bird_count INTEGER DEFAULT 0`, (err) => {
+                  if (!err) console.log('Added bird_count column to purchases table');
+                });
+              }
+            });
+          }
         });
 
         // Expenses table

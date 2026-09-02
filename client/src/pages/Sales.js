@@ -32,6 +32,7 @@ function Sales({ user, onLogout }) {
     customer_id: '',
     customer_name: '',
     weight: '',
+    bird_count: '',
     rate: '',
     payment_status: 'Pending',
     notes: ''
@@ -136,6 +137,7 @@ function Sales({ user, onLogout }) {
         customer_id: '',
         customer_name: '',
         weight: '',
+        bird_count: '',
         rate: '',
         payment_status: 'Pending',
         notes: ''
@@ -154,6 +156,7 @@ function Sales({ user, onLogout }) {
       customer_id: sale.customer_id,
       customer_name: sale.customer_name,
       weight: sale.weight,
+      bird_count: sale.bird_count || '',
       rate: sale.rate,
       payment_status: sale.payment_status,
       notes: sale.notes || ''
@@ -262,15 +265,17 @@ function Sales({ user, onLogout }) {
             <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
 
             <div style={{ marginBottom: '8px', fontSize: '11px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 1.5fr', gap: '0px', marginBottom: '4px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 0.8fr 0.7fr 1.2fr 1.5fr', gap: '0px', marginBottom: '4px' }}>
                 <div>Description</div>
+                <div style={{ textAlign: 'center' }}>Nos</div>
                 <div style={{ textAlign: 'center' }}>Qty</div>
                 <div style={{ textAlign: 'center' }}>Rate</div>
                 <div style={{ textAlign: 'right' }}>Amount</div>
               </div>
               <div style={{ borderBottom: '1px solid black', marginBottom: '4px' }}></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 1.5fr', gap: '0px', marginBottom: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 0.8fr 0.7fr 1.2fr 1.5fr', gap: '0px', marginBottom: '8px' }}>
                 <div>Poultry</div>
+                <div style={{ textAlign: 'center' }}>{selectedSaleForPrint.bird_count || '-'}</div>
                 <div style={{ textAlign: 'center' }}>{(Math.round(selectedSaleForPrint.weight * 100) / 100).toFixed(2)}kg</div>
                 <div style={{ textAlign: 'center' }}>₹{(Math.round(selectedSaleForPrint.rate * 100) / 100).toFixed(2)}</div>
                 <div style={{ textAlign: 'right' }}>{formatCurrency(selectedSaleForPrint.amount)}</div>
@@ -495,6 +500,20 @@ function Sales({ user, onLogout }) {
                 </div>
 
                 <div className="input-group">
+                  <label>Bird Count (nos)</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={formData.bird_count}
+                    onChange={(e) => setFormData({ ...formData, bird_count: parseInt(e.target.value) || '' })}
+                    placeholder="0"
+                    step="1"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="input-group">
                   <label>Rate (₹/kg) *</label>
                   <input
                     type="number"
@@ -506,6 +525,18 @@ function Sales({ user, onLogout }) {
                     required
                   />
                 </div>
+
+                {formData.weight && formData.bird_count && (
+                  <div className="input-group">
+                    <label>Avg Weight/Bird</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={formData.bird_count > 0 ? (formData.weight / formData.bird_count).toFixed(3) : '0'}
+                      style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
+                    />
+                  </div>
+                )}
               </div>
 
               {formData.weight && formData.rate && (
@@ -675,10 +706,19 @@ function Sales({ user, onLogout }) {
                   </span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px', fontSize: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px', fontSize: '14px' }}>
                   <div>
                     <div style={{ color: '#999', fontSize: '12px' }}>Weight</div>
                     <div style={{ fontWeight: '600' }}>{(Math.round(sale.weight * 100) / 100).toFixed(2)} kg</div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px' }}>Nos/Birds</div>
+                    <div style={{ fontWeight: '600' }}>{sale.bird_count || '-'}</div>
+                    {sale.bird_count && sale.weight && (
+                      <div style={{ fontSize: '11px', color: '#27ae60', marginTop: '2px' }}>
+                        Avg: {(sale.weight / sale.bird_count).toFixed(3)} kg/bird
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div style={{ color: '#999', fontSize: '12px' }}>Rate</div>

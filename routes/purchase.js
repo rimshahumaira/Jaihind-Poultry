@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   try {
-    const { date, supplier_id, supplier_name, weight, rate, cage_lot_number, notes } = req.body;
+    const { date, supplier_id, supplier_name, weight, bird_count, rate, cage_lot_number, notes } = req.body;
 
     if (!weight || !rate || weight < 0 || rate < 0) {
       return res.status(400).json({ error: 'Invalid weight or rate' });
@@ -15,9 +15,9 @@ router.post('/', async (req, res) => {
     const amount = weight * rate;
 
     await db.run(
-      `INSERT INTO purchases (id, date, supplier_id, supplier_name, weight, rate, amount, cage_lot_number, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, date, supplier_id || null, supplier_name, weight, rate, amount, cage_lot_number || null, notes || null]
+      `INSERT INTO purchases (id, date, supplier_id, supplier_name, weight, bird_count, rate, amount, cage_lot_number, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, date, supplier_id || null, supplier_name, weight, bird_count || 0, rate, amount, cage_lot_number || null, notes || null]
     );
 
     // Update supplier stats
@@ -75,7 +75,7 @@ router.get('/:id', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const { date, supplier_id, supplier_name, weight, rate, cage_lot_number, notes } = req.body;
+    const { date, supplier_id, supplier_name, weight, bird_count, rate, cage_lot_number, notes } = req.body;
 
     if (!weight || !rate || weight < 0 || rate < 0) {
       return res.status(400).json({ error: 'Invalid weight or rate' });
@@ -89,9 +89,9 @@ router.put('/:id', async (req, res) => {
     const amount = weight * rate;
 
     await db.run(
-      `UPDATE purchases SET date = ?, supplier_id = ?, supplier_name = ?, weight = ?, rate = ?, amount = ?, cage_lot_number = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+      `UPDATE purchases SET date = ?, supplier_id = ?, supplier_name = ?, weight = ?, bird_count = ?, rate = ?, amount = ?, cage_lot_number = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [date, supplier_id || null, supplier_name, weight, rate, amount, cage_lot_number || null, notes || null, req.params.id]
+      [date, supplier_id || null, supplier_name, weight, bird_count || 0, rate, amount, cage_lot_number || null, notes || null, req.params.id]
     );
 
     // Update supplier stats

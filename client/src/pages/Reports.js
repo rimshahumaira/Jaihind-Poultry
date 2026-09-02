@@ -186,7 +186,7 @@ function Reports({ user, onLogout }) {
                   <div style={{ fontSize: '11px', fontWeight: '700', color: '#2c3e50', marginBottom: '6px', paddingBottom: '4px', borderBottom: '1px solid #e8f4f8' }}>
                     📦 PURCHASE
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '6px' }}>
                     <div style={{ backgroundColor: '#ecf0f1', padding: '6px', borderRadius: '4px' }}>
                       <div style={{ fontSize: '9px', color: '#7f8c8d' }}>Total</div>
                       <div style={{ fontSize: '12px', fontWeight: '700' }}>{formatQuantity(report.purchase.totalKg)} kg</div>
@@ -196,9 +196,15 @@ function Reports({ user, onLogout }) {
                       <div style={{ fontSize: '12px', fontWeight: '700' }}>{formatCurrency(report.purchase.totalAmount)}</div>
                     </div>
                   </div>
-                  <div style={{ backgroundColor: '#ecf0f1', padding: '6px', borderRadius: '4px', marginTop: '6px' }}>
-                    <div style={{ fontSize: '9px', color: '#7f8c8d' }}>Avg Rate</div>
-                    <div style={{ fontSize: '12px', fontWeight: '700' }}>{formatCurrency(report.purchase.avgRate)}/kg</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div style={{ backgroundColor: '#ecf0f1', padding: '6px', borderRadius: '4px' }}>
+                      <div style={{ fontSize: '9px', color: '#7f8c8d' }}>Avg Rate</div>
+                      <div style={{ fontSize: '12px', fontWeight: '700' }}>{formatCurrency(report.purchase.avgRate)}/kg</div>
+                    </div>
+                    <div style={{ backgroundColor: '#ecf0f1', padding: '6px', borderRadius: '4px' }}>
+                      <div style={{ fontSize: '9px', color: '#7f8c8d' }}>Avg Bird Wt</div>
+                      <div style={{ fontSize: '12px', fontWeight: '700' }}>{report.purchase.avgBirdWeight ? report.purchase.avgBirdWeight.toFixed(3) : '0'} kg</div>
+                    </div>
                   </div>
                 </div>
 
@@ -207,7 +213,7 @@ function Reports({ user, onLogout }) {
                   <div style={{ fontSize: '11px', fontWeight: '700', color: '#2c3e50', marginBottom: '6px', paddingBottom: '4px', borderBottom: '1px solid #e8f4f8' }}>
                     💰 SALES
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '6px' }}>
                     <div style={{ backgroundColor: '#e8f5e9', padding: '6px', borderRadius: '4px' }}>
                       <div style={{ fontSize: '9px', color: '#7f8c8d' }}>Total</div>
                       <div style={{ fontSize: '12px', fontWeight: '700', color: '#27ae60' }}>{formatQuantity(report.sales.totalKg)} kg</div>
@@ -217,9 +223,15 @@ function Reports({ user, onLogout }) {
                       <div style={{ fontSize: '12px', fontWeight: '700', color: '#27ae60' }}>{formatCurrency(report.sales.totalAmount)}</div>
                     </div>
                   </div>
-                  <div style={{ backgroundColor: '#e8f5e9', padding: '6px', borderRadius: '4px', marginTop: '6px' }}>
-                    <div style={{ fontSize: '9px', color: '#7f8c8d' }}>Avg Rate</div>
-                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#27ae60' }}>{formatCurrency(report.sales.avgRate)}/kg</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div style={{ backgroundColor: '#e8f5e9', padding: '6px', borderRadius: '4px' }}>
+                      <div style={{ fontSize: '9px', color: '#7f8c8d' }}>Avg Rate</div>
+                      <div style={{ fontSize: '12px', fontWeight: '700', color: '#27ae60' }}>{formatCurrency(report.sales.avgRate)}/kg</div>
+                    </div>
+                    <div style={{ backgroundColor: '#e8f5e9', padding: '6px', borderRadius: '4px' }}>
+                      <div style={{ fontSize: '9px', color: '#7f8c8d' }}>Avg Bird Wt</div>
+                      <div style={{ fontSize: '12px', fontWeight: '700', color: '#27ae60' }}>{report.sales.avgBirdWeight ? report.sales.avgBirdWeight.toFixed(3) : '0'} kg</div>
+                    </div>
                   </div>
                 </div>
               </div>

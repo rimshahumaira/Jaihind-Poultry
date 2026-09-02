@@ -20,10 +20,14 @@ router.get('/daily/:date', async (req, res) => {
     const totalSalesAmount = sales.reduce((sum, s) => sum + s.amount, 0);
     const totalSoldKg = sales.reduce((sum, s) => sum + s.weight, 0);
     const avgSaleRate = totalSoldKg > 0 ? totalSalesAmount / totalSoldKg : 0;
+    const totalBirdsSold = sales.reduce((sum, s) => sum + (s.bird_count || 0), 0);
+    const avgBirdWeight = totalBirdsSold > 0 ? totalSoldKg / totalBirdsSold : 0;
 
     const totalPurchaseAmount = purchases.reduce((sum, p) => sum + p.amount, 0);
     const totalPurchasedKg = purchases.reduce((sum, p) => sum + p.weight, 0);
     const avgPurchaseRate = totalPurchasedKg > 0 ? totalPurchaseAmount / totalPurchasedKg : 0;
+    const totalBirdsPurchased = purchases.reduce((sum, p) => sum + (p.bird_count || 0), 0);
+    const avgBirdWeightPurchase = totalBirdsPurchased > 0 ? totalPurchasedKg / totalBirdsPurchased : 0;
 
     let labourExpenses = 0;
     let fuelExpenses = 0;
@@ -67,12 +71,16 @@ router.get('/daily/:date', async (req, res) => {
         totalKg: Math.round(totalPurchasedKg * 100) / 100,
         totalAmount: Math.round(totalPurchaseAmount * 100) / 100,
         avgRate: Math.round(avgPurchaseRate * 100) / 100,
+        totalBirds: totalBirdsPurchased,
+        avgBirdWeight: Math.round(avgBirdWeightPurchase * 1000) / 1000,
         purchases
       },
       sales: {
         totalKg: Math.round(totalSoldKg * 100) / 100,
         totalAmount: Math.round(totalSalesAmount * 100) / 100,
         avgRate: Math.round(avgSaleRate * 100) / 100,
+        totalBirds: totalBirdsSold,
+        avgBirdWeight: Math.round(avgBirdWeight * 1000) / 1000,
         customerSales: Object.values(customerSales),
         sales
       },

@@ -18,6 +18,7 @@ function Purchase({ user, onLogout }) {
     supplier_id: '',
     supplier_name: '',
     weight: '',
+    bird_count: '',
     rate: '',
     cage_lot_number: '',
     notes: ''
@@ -89,6 +90,7 @@ function Purchase({ user, onLogout }) {
         supplier_id: '',
         supplier_name: '',
         weight: '',
+        bird_count: '',
         rate: '',
         cage_lot_number: '',
         notes: ''
@@ -107,6 +109,7 @@ function Purchase({ user, onLogout }) {
       supplier_id: purchase.supplier_id,
       supplier_name: purchase.supplier_name,
       weight: purchase.weight,
+      bird_count: purchase.bird_count || '',
       rate: purchase.rate,
       cage_lot_number: purchase.cage_lot_number || '',
       notes: purchase.notes || ''
@@ -195,6 +198,20 @@ function Purchase({ user, onLogout }) {
                 </div>
 
                 <div className="input-group">
+                  <label>Bird Count (nos)</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={formData.bird_count}
+                    onChange={(e) => setFormData({ ...formData, bird_count: parseInt(e.target.value) || '' })}
+                    placeholder="0"
+                    step="1"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="input-group">
                   <label>Rate (₹/kg) *</label>
                   <input
                     type="number"
@@ -206,6 +223,18 @@ function Purchase({ user, onLogout }) {
                     required
                   />
                 </div>
+
+                {formData.weight && formData.bird_count && (
+                  <div className="input-group">
+                    <label>Avg Weight/Bird</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={formData.bird_count > 0 ? (formData.weight / formData.bird_count).toFixed(3) : '0'}
+                      style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
+                    />
+                  </div>
+                )}
               </div>
 
               {formData.weight && formData.rate && (
@@ -305,10 +334,19 @@ function Purchase({ user, onLogout }) {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px', fontSize: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px', fontSize: '14px' }}>
                   <div>
                     <div style={{ color: '#999', fontSize: '12px' }}>Weight</div>
                     <div style={{ fontWeight: '600' }}>{(Math.round(purchase.weight * 100) / 100).toFixed(2)} kg</div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px' }}>Nos/Birds</div>
+                    <div style={{ fontWeight: '600' }}>{purchase.bird_count || '-'}</div>
+                    {purchase.bird_count && purchase.weight && (
+                      <div style={{ fontSize: '11px', color: '#27ae60', marginTop: '2px' }}>
+                        Avg: {(purchase.weight / purchase.bird_count).toFixed(3)} kg/bird
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div style={{ color: '#999', fontSize: '12px' }}>Rate</div>
