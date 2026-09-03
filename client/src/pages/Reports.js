@@ -7,13 +7,27 @@ function Reports({ user, onLogout }) {
   const printRef = useRef();
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [report, setReport] = useState(null);
+  const [businessDetails, setBusinessDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [printView, setPrintView] = useState(false);
 
   useEffect(() => {
+    loadBusinessDetails();
+  }, []);
+
+  useEffect(() => {
     loadReport();
   }, [date]);
+
+  const loadBusinessDetails = async () => {
+    try {
+      const res = await API.get('/business/details');
+      setBusinessDetails(res.data || {});
+    } catch (err) {
+      console.error('Error loading business details:', err);
+    }
+  };
 
   const loadReport = async () => {
     try {
@@ -167,8 +181,23 @@ function Reports({ user, onLogout }) {
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: '12px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
               <div style={{ fontSize: '18px', fontWeight: '700', color: '#2c3e50', marginBottom: '2px' }}>
-                POULTRY TRADER APP
+                {businessDetails.business_name || 'POULTRY TRADER APP'}
               </div>
+              {businessDetails.address && (
+                <div style={{ fontSize: '10px', color: '#555', marginBottom: '2px' }}>
+                  {businessDetails.address}
+                </div>
+              )}
+              {businessDetails.contact_number && (
+                <div style={{ fontSize: '10px', color: '#555', marginBottom: '2px' }}>
+                  Contact: {businessDetails.contact_number}
+                </div>
+              )}
+              {businessDetails.gst_number && (
+                <div style={{ fontSize: '10px', color: '#555', marginBottom: '4px' }}>
+                  GSTIN: {businessDetails.gst_number}
+                </div>
+              )}
               <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '4px' }}>
                 Daily Business Report
               </div>

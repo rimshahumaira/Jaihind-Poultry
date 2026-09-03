@@ -283,6 +283,23 @@ const dbAsync = {
           if (err && !err.message.includes('already exists')) reject(err);
         });
 
+        // Business details table
+        db.run(`
+          CREATE TABLE IF NOT EXISTS business_details (
+            id TEXT PRIMARY KEY,
+            business_name TEXT,
+            contact_number TEXT,
+            alternate_contact TEXT,
+            address TEXT,
+            gst_number TEXT,
+            email TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `, (err) => {
+          if (err && !err.message.includes('already exists')) reject(err);
+        });
+
         db.run(`CREATE INDEX IF NOT EXISTS idx_sales_date ON sales(date)`, (err) => {
           if (err) reject(err);
         });

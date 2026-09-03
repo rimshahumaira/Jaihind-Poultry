@@ -8,14 +8,28 @@ function CustomerLedger({ user, onLogout }) {
   const navigate = useNavigate();
   const printRef = useRef();
   const [ledger, setLedger] = useState(null);
+  const [businessDetails, setBusinessDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
 
   useEffect(() => {
+    loadBusinessDetails();
+  }, []);
+
+  useEffect(() => {
     loadLedger();
   }, [id, fromDate, toDate]);
+
+  const loadBusinessDetails = async () => {
+    try {
+      const res = await API.get('/business/details');
+      setBusinessDetails(res.data || {});
+    } catch (err) {
+      console.error('Error loading business details:', err);
+    }
+  };
 
   const loadLedger = async () => {
     try {
@@ -98,7 +112,16 @@ function CustomerLedger({ user, onLogout }) {
           backgroundColor: 'white',
           color: 'black'
         }}>
-          <div style={{ textAlign: 'center', marginBottom: '5px' }}>POULTRY TRADER APP</div>
+          <div style={{ textAlign: 'center', marginBottom: '5px', fontWeight: 'bold' }}>{businessDetails.business_name || 'POULTRY TRADER APP'}</div>
+          {businessDetails.address && (
+            <div style={{ textAlign: 'center', marginBottom: '3px', fontSize: '10px' }}>{businessDetails.address}</div>
+          )}
+          {businessDetails.contact_number && (
+            <div style={{ textAlign: 'center', marginBottom: '3px', fontSize: '10px' }}>Contact: {businessDetails.contact_number}</div>
+          )}
+          {businessDetails.gst_number && (
+            <div style={{ textAlign: 'center', marginBottom: '5px', fontSize: '10px' }}>GSTIN: {businessDetails.gst_number}</div>
+          )}
           <div style={{ textAlign: 'center', marginBottom: '10px', fontSize: '11px' }}>SALES STATEMENT</div>
           <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
 
