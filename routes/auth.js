@@ -52,22 +52,23 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Initial setup (create first admin user)
+// Initial setup (create first admin user) - only works when users table is empty
 router.post('/setup', async (req, res) => {
   try {
     const { pin, business_name, username, password, name } = req.body;
 
+    // Check if any user already exists - setup is only allowed on empty users table
+    const existingUser = await db.get('SELECT COUNT(*) as count FROM users');
+    if (existingUser && existingUser.count > 0) {
+      return res.status(403).json({ error: 'Setup not allowed: system already configured' });
+    }
+
+    if (!name) {
+      return res.status(400).json({ error: 'Admin name is required' });
+    }
+
     if (!pin && !password) {
       return res.status(400).json({ error: 'PIN or password is required' });
-    }
-
-    if (!business_name) {
-      return res.status(400).json({ error: 'Business name is required' });
-    }
-
-    const existingUser = await db.get('SELECT * FROM users LIMIT 1');
-    if (existingUser) {
-      return res.status(400).json({ error: 'Business already configured' });
     }
 
     const userId = uuidv4();
