@@ -17,6 +17,7 @@ import CustomerLedger from './pages/CustomerLedger';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
 import BusinessDetails from './pages/BusinessDetails';
+import DataProtection from './pages/DataProtection';
 import AccessDenied from './pages/AccessDenied';
 
 const API = axios.create({
@@ -129,6 +130,7 @@ function App() {
           <Route path="/customer/:id/ledger" element={<ProtectedRoute roles={['ADMIN', 'SALES_USER']}><CustomerLedger user={user} onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute roles={['ADMIN']}><Users user={user} onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/business" element={<ProtectedRoute roles={['ADMIN']}><BusinessDetails user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/data-protection" element={<ProtectedRoute roles={['ADMIN']}><DataProtection user={user} onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute roles={['ADMIN']}><Settings user={user} onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/access-denied" element={<AccessDenied user={user} onLogout={handleLogout} />} />
           <Route path="*" element={<Navigate to="/" />} />

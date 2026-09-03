@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const db = require('./database');
+const dataProtection = require('./data-protection');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const dashboardRoutes = require('./routes/dashboard');
@@ -24,6 +25,20 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(fileUpload({ limits: { fileSize: 100 * 1024 * 1024 } }));
+
+// Data protection on startup
+console.log('\n=== DATA PROTECTION SYSTEM ===');
+const dbStatus = dataProtection.verifyDatabase();
+console.log('Database Status:', dbStatus);
+
+// Create automatic backup on startup
+dataProtection.createBackup('startup');
+
+// Clean up old backups, keeping last 10
+dataProtection.cleanupOldBackups(10);
+
+console.log('Available Backups:', dataProtection.listBackups().length);
+console.log('==============================\n');
 
 // Initialize database
 db.initialize().then(() => {

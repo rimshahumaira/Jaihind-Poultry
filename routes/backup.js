@@ -3,10 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { requireRole } = require('../middleware/auth');
+const dataProtection = require('../data-protection');
 const router = express.Router();
 
 const DB_PATH = path.join(__dirname, '../poultry.db');
 const BACKUP_DIR = path.join(__dirname, '../backups');
+const DATA_BACKUP_DIR = path.join(__dirname, '../data_backups');
 
 if (!fs.existsSync(BACKUP_DIR)) {
   fs.mkdirSync(BACKUP_DIR, { recursive: true });
@@ -94,6 +96,99 @@ router.delete('/:backupName', requireRole(['ADMIN']), async (req, res) => {
 
     fs.unlinkSync(backupPath);
     res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Data Protection APIs (NEW)
+router.get('/data-backups/list', requireRole(['ADMIN']), (req, res) => {
+  try {
+    const backups = dataProtection.listBackups();
+    res.json({
+      success: true,
+      backups,
+      total: backups.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/data-backups/status', requireRole(['ADMIN']), (req, res) => {
+  try {
+    const dbStatus = dataProtection.verifyDatabase();
+    const backups = dataProtection.listBackups();
+
+    res.json({
+      success: true,
+      database: dbStatus,
+      backupCount: backups.length,
+      latestBackup: backups.length > 0 ? {
+        name: backups[0].name,
+        date: backups[0].date,
+        size: backups[0].size
+      } : null
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/data-backups/create', requireRole(['ADMIN']), (req, res) => {
+  try {
+    const { reason = 'manual' } = req.body;
+    const backupPath = dataProtection.createBackup(reason);
+
+    if (!backupPath) {
+      return res.status(500).json({ error: 'Failed to create backup' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Backup created successfully',
+      backup: path.basename(backupPath)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/data-backups/restore/:backupName', requireRole(['ADMIN']), (req, res) => {
+  try {
+    const { backupName } = req.params;
+    const result = dataProtection.restoreFromBackup(backupName);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({
+      success: true,
+      message: 'Database restored successfully',
+      details: result
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.delete('/data-backups/:backupName', requireRole(['ADMIN']), (req, res) => {
+  try {
+    const { backupName } = req.params;
+    const backupPath = path.join(DATA_BACKUP_DIR, backupName);
+
+    // Security check: prevent directory traversal
+    if (!backupPath.startsWith(DATA_BACKUP_DIR)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (!fs.existsSync(backupPath)) {
+      return res.status(404).json({ error: 'Backup not found' });
+    }
+
+    fs.unlinkSync(backupPath);
+    res.json({ success: true, message: 'Backup deleted' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -19,6 +19,7 @@ function Navigation({ active, user }) {
       { id: 'expenses', icon: '💸', label: 'Expenses', path: '/expenses', roles: ['ADMIN'] },
       { id: 'users', icon: '🔐', label: 'Users', path: '/users', roles: ['ADMIN'] },
       { id: 'business', icon: '🏢', label: 'Business', path: '/business', roles: ['ADMIN'] },
+      { id: 'data-protection', icon: '🛡️', label: 'Backups', path: '/data-protection', roles: ['ADMIN'] },
       { id: 'settings', icon: '⚙️', label: 'Settings', path: '/settings', roles: ['ADMIN'] }
     ];
   }
