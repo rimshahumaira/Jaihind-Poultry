@@ -1,9 +1,10 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
+const { requireRole } = require('../middleware/auth');
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', requireRole(['ADMIN']), async (req, res) => {
   try {
     const { date, category, amount, description } = req.body;
 
@@ -30,7 +31,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', requireRole(['ADMIN']), async (req, res) => {
   try {
     const { fromDate, toDate } = req.query;
     let sql = `SELECT * FROM expenses WHERE 1=1`;
@@ -54,7 +55,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireRole(['ADMIN']), async (req, res) => {
   try {
     const expense = await db.get(`SELECT * FROM expenses WHERE id = ?`, [req.params.id]);
     if (!expense) {
@@ -66,7 +67,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRole(['ADMIN']), async (req, res) => {
   try {
     const { date, category, amount, description } = req.body;
 
@@ -92,7 +93,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole(['ADMIN']), async (req, res) => {
   try {
     await db.run('DELETE FROM expenses WHERE id = ?', [req.params.id]);
     res.json({ success: true });
@@ -101,7 +102,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-router.get('/daily/:date', async (req, res) => {
+router.get('/daily/:date', requireRole(['ADMIN']), async (req, res) => {
   try {
     const expenses = await db.all(
       `SELECT * FROM expenses WHERE date = ? ORDER BY category`,

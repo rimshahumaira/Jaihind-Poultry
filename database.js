@@ -11,16 +11,79 @@ const dbAsync = {
   initialize: async () => {
     return new Promise((resolve, reject) => {
       db.serialize(() => {
-        // Users table
+        // Users table (updated schema with role support)
         db.run(`
           CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
-            pin TEXT NOT NULL,
-            business_name TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            business_id TEXT NOT NULL DEFAULT 'default',
+            username TEXT UNIQUE,
+            name TEXT,
+            password TEXT,
+            pin TEXT,
+            role TEXT DEFAULT 'ADMIN',
+            active INTEGER DEFAULT 1,
+            business_name TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
           )
         `, (err) => {
           if (err && !err.message.includes('already exists')) reject(err);
+        });
+
+        // Add new columns to existing users table if it doesn't have them
+        db.all(`PRAGMA table_info(users)`, (err, columns) => {
+          if (!err && columns) {
+            const columnNames = columns.map(c => c.name);
+
+            // Add business_id column
+            if (!columnNames.includes('business_id')) {
+              db.run(`ALTER TABLE users ADD COLUMN business_id TEXT NOT NULL DEFAULT 'default'`, (err) => {
+                if (!err) console.log('Added business_id column to users table');
+              });
+            }
+
+            // Add username column
+            if (!columnNames.includes('username')) {
+              db.run(`ALTER TABLE users ADD COLUMN username TEXT UNIQUE`, (err) => {
+                if (!err) console.log('Added username column to users table');
+              });
+            }
+
+            // Add name column
+            if (!columnNames.includes('name')) {
+              db.run(`ALTER TABLE users ADD COLUMN name TEXT`, (err) => {
+                if (!err) console.log('Added name column to users table');
+              });
+            }
+
+            // Add password column
+            if (!columnNames.includes('password')) {
+              db.run(`ALTER TABLE users ADD COLUMN password TEXT`, (err) => {
+                if (!err) console.log('Added password column to users table');
+              });
+            }
+
+            // Add role column
+            if (!columnNames.includes('role')) {
+              db.run(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'ADMIN'`, (err) => {
+                if (!err) console.log('Added role column to users table');
+              });
+            }
+
+            // Add active column
+            if (!columnNames.includes('active')) {
+              db.run(`ALTER TABLE users ADD COLUMN active INTEGER DEFAULT 1`, (err) => {
+                if (!err) console.log('Added active column to users table');
+              });
+            }
+
+            // Add updated_at column
+            if (!columnNames.includes('updated_at')) {
+              db.run(`ALTER TABLE users ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {
+                if (!err) console.log('Added updated_at column to users table');
+              });
+            }
+          }
         });
 
         // Customers table

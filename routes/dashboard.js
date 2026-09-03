@@ -1,6 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
+const { requireRole } = require('../middleware/auth');
 const router = express.Router();
 
 const calculateDailySummary = async (date) => {
@@ -63,7 +64,7 @@ const calculateDailySummary = async (date) => {
   };
 };
 
-router.get('/:date', async (req, res) => {
+router.get('/:date', requireRole(['ADMIN']), async (req, res) => {
   try {
     const summary = await calculateDailySummary(req.params.date);
     res.json(summary);
@@ -72,7 +73,7 @@ router.get('/:date', async (req, res) => {
   }
 });
 
-router.get('/date/:date', async (req, res) => {
+router.get('/date/:date', requireRole(['ADMIN']), async (req, res) => {
   try {
     const summary = await calculateDailySummary(req.params.date);
     res.json(summary);
@@ -81,7 +82,7 @@ router.get('/date/:date', async (req, res) => {
   }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', requireRole(['ADMIN']), async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     const summary = await calculateDailySummary(today);
@@ -91,7 +92,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/summary', async (req, res) => {
+router.post('/summary', requireRole(['ADMIN']), async (req, res) => {
   try {
     const { date } = req.body;
     const summary = await calculateDailySummary(date);

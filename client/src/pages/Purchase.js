@@ -380,7 +380,7 @@ function Purchase({ user, onLogout }) {
         )}
       </div>
 
-      <Navigation active="purchase" />
+      <Navigation user={user} active="purchase" />
     </>
   );
 }

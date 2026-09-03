@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../database');
+const { requireRole } = require('../middleware/auth');
 const router = express.Router();
 
 const formatCurrency = (amount) => {
@@ -10,7 +11,7 @@ const formatQuantity = (qty) => {
   return (Math.round(qty * 100) / 100).toString() + ' kg';
 };
 
-router.get('/daily/:date', async (req, res) => {
+router.get('/daily/:date', requireRole(['ADMIN']), async (req, res) => {
   try {
     const date = req.params.date;
     const sales = await db.all('SELECT * FROM sales WHERE date = ? ORDER BY created_at', [date]);
@@ -106,7 +107,7 @@ router.get('/daily/:date', async (req, res) => {
   }
 });
 
-router.get('/text-report/:date', async (req, res) => {
+router.get('/text-report/:date', requireRole(['ADMIN']), async (req, res) => {
   try {
     const date = req.params.date;
     const sales = await db.all('SELECT * FROM sales WHERE date = ? ORDER BY created_at', [date]);
@@ -196,7 +197,7 @@ Net Profit Margin: ${(Math.round(netProfitMargin * 100) / 100).toFixed(2)}%
   }
 });
 
-router.post('/export-csv/:type', async (req, res) => {
+router.post('/export-csv/:type', requireRole(['ADMIN']), async (req, res) => {
   try {
     const type = req.params.type;
     const { fromDate, toDate } = req.body;

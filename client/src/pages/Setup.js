@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 
 function Setup({ onSetup }) {
   const [businessName, setBusinessName] = useState('');
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [usePassword, setUsePassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -16,20 +21,49 @@ function Setup({ onSetup }) {
       return;
     }
 
-    if (!pin || pin.length < 4) {
-      setError('PIN must be at least 4 digits');
+    if (!name.trim()) {
+      setError('Admin name is required');
       return;
     }
 
-    if (pin !== confirmPin) {
-      setError('PINs do not match');
-      return;
+    if (usePassword) {
+      if (!username.trim()) {
+        setError('Username is required');
+        return;
+      }
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+    } else {
+      if (!pin || pin.length < 4) {
+        setError('PIN must be at least 4 digits');
+        return;
+      }
+      if (pin !== confirmPin) {
+        setError('PINs do not match');
+        return;
+      }
     }
 
     setLoading(true);
 
     try {
-      await onSetup(pin, businessName);
+      const data = {
+        business_name: businessName,
+        name
+      };
+      if (usePassword) {
+        data.username = username;
+        data.password = password;
+      } else {
+        data.pin = pin;
+      }
+      await onSetup(data);
     } catch (err) {
       setError(err.response?.data?.error || 'Setup failed');
     } finally {
@@ -71,32 +105,113 @@ function Setup({ onSetup }) {
         </div>
 
         <div className="input-group">
-          <label>Create PIN (4-6 digits)</label>
+          <label>Admin Name</label>
           <input
-            type="password"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={pin}
-            onChange={handlePinChange}
-            placeholder="Enter 4-6 digit PIN"
-            maxLength="6"
-            style={{ fontSize: '24px', textAlign: 'center', letterSpacing: '4px' }}
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your full name"
           />
         </div>
 
-        <div className="input-group">
-          <label>Confirm PIN</label>
-          <input
-            type="password"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={confirmPin}
-            onChange={handleConfirmPinChange}
-            placeholder="Confirm PIN"
-            maxLength="6"
-            style={{ fontSize: '24px', textAlign: 'center', letterSpacing: '4px' }}
-          />
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', marginTop: '16px' }}>
+          <button
+            type="button"
+            onClick={() => { setUsePassword(false); setError(''); }}
+            style={{
+              flex: 1,
+              padding: '10px',
+              background: !usePassword ? '#3498db' : 'rgba(255,255,255,0.2)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px'
+            }}
+          >
+            PIN Setup
+          </button>
+          <button
+            type="button"
+            onClick={() => { setUsePassword(true); setError(''); }}
+            style={{
+              flex: 1,
+              padding: '10px',
+              background: usePassword ? '#3498db' : 'rgba(255,255,255,0.2)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px'
+            }}
+          >
+            User/Password
+          </button>
         </div>
+
+        {!usePassword ? (
+          <>
+            <div className="input-group">
+              <label>Create PIN (4-6 digits)</label>
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={pin}
+                onChange={handlePinChange}
+                placeholder="Enter 4-6 digit PIN"
+                maxLength="6"
+                style={{ fontSize: '24px', textAlign: 'center', letterSpacing: '4px' }}
+              />
+            </div>
+
+            <div className="input-group">
+              <label>Confirm PIN</label>
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={confirmPin}
+                onChange={handleConfirmPinChange}
+                placeholder="Confirm PIN"
+                maxLength="6"
+                style={{ fontSize: '24px', textAlign: 'center', letterSpacing: '4px' }}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="input-group">
+              <label>Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Create a username"
+              />
+            </div>
+
+            <div className="input-group">
+              <label>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Create a password (min 6 characters)"
+              />
+            </div>
+
+            <div className="input-group">
+              <label>Confirm Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+              />
+            </div>
+          </>
+        )}
 
         <button
           type="submit"
@@ -109,7 +224,7 @@ function Setup({ onSetup }) {
       </form>
 
       <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '40px', fontSize: '12px', textAlign: 'center' }}>
-        You'll use this PIN to secure your business data
+        You'll use this to secure your business data
       </p>
     </div>
   );

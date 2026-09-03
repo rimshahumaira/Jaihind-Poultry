@@ -278,7 +278,7 @@ function Expenses({ user, onLogout }) {
         )}
       </div>
 
-      <Navigation active="" />
+      <Navigation user={user} active="" />
     </>
   );
 }

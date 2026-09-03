@@ -1,6 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
+const { requireRole } = require('../middleware/auth');
 const router = express.Router();
 
 const calculateInventory = async (date) => {
@@ -22,7 +23,7 @@ const calculateInventory = async (date) => {
   };
 };
 
-router.get('/:date', async (req, res) => {
+router.get('/:date', requireRole(['ADMIN']), async (req, res) => {
   try {
     const inventory = await calculateInventory(req.params.date);
     res.json(inventory);
@@ -31,7 +32,7 @@ router.get('/:date', async (req, res) => {
   }
 });
 
-router.get('/date/:date', async (req, res) => {
+router.get('/date/:date', requireRole(['ADMIN']), async (req, res) => {
   try {
     const inventory = await calculateInventory(req.params.date);
     res.json(inventory);
@@ -40,7 +41,7 @@ router.get('/date/:date', async (req, res) => {
   }
 });
 
-router.post('/init/:date', async (req, res) => {
+router.post('/init/:date', requireRole(['ADMIN']), async (req, res) => {
   try {
     const { openingStock } = req.body;
     const id = uuidv4();
@@ -65,7 +66,7 @@ router.post('/init/:date', async (req, res) => {
   }
 });
 
-router.get('/current/stock', async (req, res) => {
+router.get('/current/stock', requireRole(['ADMIN']), async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     const inventory = await calculateInventory(today);

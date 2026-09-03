@@ -1,9 +1,10 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
+const { requireRole } = require('../middleware/auth');
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', requireRole(['ADMIN']), async (req, res) => {
   try {
     const { name, phone } = req.body;
     const id = uuidv4();
@@ -20,7 +21,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', requireRole(['ADMIN']), async (req, res) => {
   try {
     const suppliers = await db.all(
       `SELECT * FROM suppliers ORDER BY name`
@@ -31,7 +32,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireRole(['ADMIN']), async (req, res) => {
   try {
     const supplier = await db.get(
       `SELECT * FROM suppliers WHERE id = ?`,
@@ -46,7 +47,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRole(['ADMIN']), async (req, res) => {
   try {
     const { name, phone } = req.body;
     await db.run(
@@ -61,7 +62,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole(['ADMIN']), async (req, res) => {
   try {
     await db.run('DELETE FROM suppliers WHERE id = ?', [req.params.id]);
     res.json({ success: true });

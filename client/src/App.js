@@ -14,9 +14,19 @@ import Suppliers from './pages/Suppliers';
 import Expenses from './pages/Expenses';
 import Collections from './pages/Collections';
 import CustomerLedger from './pages/CustomerLedger';
+import Users from './pages/Users';
+import AccessDenied from './pages/AccessDenied';
 
 const API = axios.create({
   baseURL: '/api'
+});
+
+API.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 function App() {
@@ -30,9 +40,15 @@ function App() {
         const res = await API.get('/auth/check-setup');
         setIsConfigured(res.data.isConfigured);
 
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            const userRes = await API.get('/auth/me');
+            setUser(userRes.data);
+          } catch (error) {
+            localStorage.removeItem('token');
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error('Error checking setup:', error);
@@ -44,10 +60,10 @@ function App() {
     checkSetup();
   }, []);
 
-  const handleLogin = async (pin) => {
+  const handleLogin = async (credentials) => {
     try {
-      const res = await API.post('/auth/login', { pin });
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      const res = await API.post('/auth/login', credentials);
+      localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
       return true;
     } catch (error) {
@@ -55,10 +71,10 @@ function App() {
     }
   };
 
-  const handleSetup = async (pin, businessName) => {
+  const handleSetup = async (setupData) => {
     try {
-      const res = await API.post('/auth/setup', { pin, business_name: businessName });
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      const res = await API.post('/auth/setup', setupData);
+      localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
       setIsConfigured(true);
       return true;
@@ -68,7 +84,7 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    localStorage.removeItem('token');
     setUser(null);
   };
 
@@ -81,6 +97,14 @@ function App() {
     );
   }
 
+  const ProtectedRoute = ({ roles, children }) => {
+    if (!user) return <Navigate to="/" />;
+    if (roles && !roles.includes(user.role)) {
+      return <AccessDenied user={user} onLogout={handleLogout} />;
+    }
+    return children;
+  };
+
   return (
     <Router>
       {!user ? (
@@ -92,15 +116,17 @@ function App() {
       ) : (
         <Routes>
           <Route path="/" element={<Dashboard user={user} onLogout={handleLogout} />} />
-          <Route path="/sales" element={<Sales user={user} onLogout={handleLogout} />} />
-          <Route path="/purchase" element={<Purchase user={user} onLogout={handleLogout} />} />
-          <Route path="/stock" element={<Stock user={user} onLogout={handleLogout} />} />
-          <Route path="/reports" element={<Reports user={user} onLogout={handleLogout} />} />
-          <Route path="/customers" element={<Customers user={user} onLogout={handleLogout} />} />
-          <Route path="/suppliers" element={<Suppliers user={user} onLogout={handleLogout} />} />
-          <Route path="/expenses" element={<Expenses user={user} onLogout={handleLogout} />} />
-          <Route path="/collections" element={<Collections user={user} onLogout={handleLogout} />} />
-          <Route path="/customer/:id/ledger" element={<CustomerLedger user={user} onLogout={handleLogout} />} />
+          <Route path="/sales" element={<ProtectedRoute roles={['ADMIN', 'SALES_USER']}><Sales user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/purchase" element={<ProtectedRoute roles={['ADMIN']}><Purchase user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/stock" element={<ProtectedRoute roles={['ADMIN']}><Stock user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute roles={['ADMIN']}><Reports user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/customers" element={<ProtectedRoute roles={['ADMIN', 'SALES_USER']}><Customers user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/suppliers" element={<ProtectedRoute roles={['ADMIN']}><Suppliers user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/expenses" element={<ProtectedRoute roles={['ADMIN']}><Expenses user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/collections" element={<ProtectedRoute roles={['ADMIN', 'SALES_USER']}><Collections user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/customer/:id/ledger" element={<ProtectedRoute roles={['ADMIN', 'SALES_USER']}><CustomerLedger user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute roles={['ADMIN']}><Users user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/access-denied" element={<AccessDenied user={user} onLogout={handleLogout} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       )}

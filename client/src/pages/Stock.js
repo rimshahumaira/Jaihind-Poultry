@@ -192,7 +192,7 @@ function Stock({ user, onLogout }) {
         )}
       </div>
 
-      <Navigation active="stock" />
+      <Navigation user={user} active="stock" />
     </>
   );
 }

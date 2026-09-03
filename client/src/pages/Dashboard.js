@@ -58,7 +58,7 @@ function Dashboard({ user, onLogout }) {
             <div className="spinner"></div>
           </div>
         </div>
-        <Navigation active="dashboard" />
+        <Navigation user={user} active="dashboard" />
       </>
     );
   }
@@ -214,7 +214,7 @@ function Dashboard({ user, onLogout }) {
         )}
       </div>
 
-      <Navigation active="dashboard" />
+      <Navigation user={user} active="dashboard" />
     </>
   );
 }

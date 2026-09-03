@@ -764,7 +764,7 @@ function Sales({ user, onLogout }) {
         )}
       </div>
 
-      <Navigation active="sales" />
+      <Navigation user={user} active="sales" />
     </>
   );
 }

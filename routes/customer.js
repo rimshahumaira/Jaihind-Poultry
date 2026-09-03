@@ -1,9 +1,10 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
+const { requireRole } = require('../middleware/auth');
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', requireRole(['ADMIN']), async (req, res) => {
   try {
     const { name, phone, default_sale_rate } = req.body;
     const id = uuidv4();
@@ -20,7 +21,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', requireRole(['ADMIN', 'SALES_USER']), async (req, res) => {
   try {
     const customers = await db.all(
       `SELECT * FROM customers ORDER BY name`
@@ -31,7 +32,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireRole(['ADMIN', 'SALES_USER']), async (req, res) => {
   try {
     const customer = await db.get(
       `SELECT * FROM customers WHERE id = ?`,
@@ -46,7 +47,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRole(['ADMIN']), async (req, res) => {
   try {
     const { name, phone, default_sale_rate } = req.body;
     await db.run(
@@ -61,7 +62,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole(['ADMIN']), async (req, res) => {
   try {
     await db.run('DELETE FROM customers WHERE id = ?', [req.params.id]);
     res.json({ success: true });
@@ -70,7 +71,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-router.get('/:id/ledger', async (req, res) => {
+router.get('/:id/ledger', requireRole(['ADMIN', 'SALES_USER']), async (req, res) => {
   try {
     const { fromDate, toDate } = req.query;
     let sql = `SELECT * FROM sales WHERE customer_id = ?`;

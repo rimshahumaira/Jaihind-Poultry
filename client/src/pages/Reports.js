@@ -532,7 +532,7 @@ function Reports({ user, onLogout }) {
         )}
       </div>
 
-      <Navigation active="reports" />
+      <Navigation user={user} active="reports" />
     </>
   );
 }

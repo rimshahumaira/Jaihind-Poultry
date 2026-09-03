@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const db = require('./database');
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
 const dashboardRoutes = require('./routes/dashboard');
 const salesRoutes = require('./routes/sales');
 const purchaseRoutes = require('./routes/purchase');
@@ -12,6 +13,7 @@ const supplierRoutes = require('./routes/supplier');
 const expenseRoutes = require('./routes/expense');
 const inventoryRoutes = require('./routes/inventory');
 const reportRoutes = require('./routes/report');
+const { verifyToken } = require('./middleware/auth');
 
 const app = express();
 
@@ -28,14 +30,15 @@ db.initialize().then(() => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/sales', salesRoutes);
-app.use('/api/purchase', purchaseRoutes);
-app.use('/api/customer', customerRoutes);
-app.use('/api/supplier', supplierRoutes);
-app.use('/api/expense', expenseRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/report', reportRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/dashboard', verifyToken, dashboardRoutes);
+app.use('/api/sales', verifyToken, salesRoutes);
+app.use('/api/purchase', verifyToken, purchaseRoutes);
+app.use('/api/customer', verifyToken, customerRoutes);
+app.use('/api/supplier', verifyToken, supplierRoutes);
+app.use('/api/expense', verifyToken, expenseRoutes);
+app.use('/api/inventory', verifyToken, inventoryRoutes);
+app.use('/api/report', verifyToken, reportRoutes);
 
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, 'client/build')));

@@ -1,35 +1,68 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
 const db = require('../database');
+const { verifyToken, requireRole, generateToken } = require('../middleware/auth');
 const router = express.Router();
 
+// Login with PIN (backward compatibility) or username/password
 router.post('/login', async (req, res) => {
   try {
-    const { pin } = req.body;
-    if (!pin) {
-      return res.status(400).json({ error: 'PIN is required' });
+    const { pin, username, password } = req.body;
+
+    let user;
+
+    // Try PIN login first (backward compatibility)
+    if (pin) {
+      user = await db.get('SELECT * FROM users WHERE (pin = ? OR password = ?) AND active = 1', [pin, pin]);
+    }
+    // Try username/password login
+    else if (username && password) {
+      user = await db.get('SELECT * FROM users WHERE username = ? AND active = 1', [username]);
+
+      if (user && user.password) {
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+      } else if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
     }
 
-    const user = await db.get('SELECT * FROM users WHERE pin = ?', [pin]);
-
-    if (user) {
-      return res.json({
-        success: true,
-        user: { id: user.id, business_name: user.business_name }
-      });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    return res.status(401).json({ error: 'Invalid PIN' });
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        business_name: user.business_name
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
+// Initial setup (create first admin user)
 router.post('/setup', async (req, res) => {
   try {
-    const { pin, business_name } = req.body;
-    if (!pin || !business_name) {
-      return res.status(400).json({ error: 'PIN and business name are required' });
+    const { pin, business_name, username, password, name } = req.body;
+
+    if (!pin && !password) {
+      return res.status(400).json({ error: 'PIN or password is required' });
+    }
+
+    if (!business_name) {
+      return res.status(400).json({ error: 'Business name is required' });
     }
 
     const existingUser = await db.get('SELECT * FROM users LIMIT 1');
@@ -38,24 +71,57 @@ router.post('/setup', async (req, res) => {
     }
 
     const userId = uuidv4();
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+
     await db.run(
-      'INSERT INTO users (id, pin, business_name) VALUES (?, ?, ?)',
-      [userId, pin, business_name]
+      `INSERT INTO users (id, business_id, username, name, password, pin, role, active, business_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, 'default', username || 'admin', name || 'Administrator', hashedPassword, pin, 'ADMIN', 1, business_name]
     );
+
+    const token = generateToken({
+      id: userId,
+      username: username || 'admin',
+      name: name || 'Administrator',
+      role: 'ADMIN',
+      business_id: 'default'
+    });
 
     res.json({
       success: true,
-      user: { id: userId, business_name }
+      token,
+      user: {
+        id: userId,
+        username: username || 'admin',
+        name: name || 'Administrator',
+        role: 'ADMIN',
+        business_name
+      }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
+// Check setup
 router.get('/check-setup', async (req, res) => {
   try {
     const user = await db.get('SELECT * FROM users LIMIT 1');
     res.json({ isConfigured: !!user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get current user info (from token)
+router.get('/me', verifyToken, async (req, res) => {
+  try {
+    const user = await db.get('SELECT id, username, name, role, active FROM users WHERE id = ?', [req.user.id]);
+    if (!user || !user.active) {
+      return res.status(401).json({ error: 'User not found or disabled' });
+    }
+
+    res.json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

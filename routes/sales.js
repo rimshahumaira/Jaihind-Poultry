@@ -1,6 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
+const { requireRole } = require('../middleware/auth');
 const router = express.Router();
 
 const generateBillNumber = async (date) => {
@@ -22,7 +23,7 @@ const generateBillNumber = async (date) => {
   return `JHP-${year}-${String(nextNumber).padStart(4, '0')}`;
 };
 
-router.post('/', async (req, res) => {
+router.post('/', requireRole(['ADMIN', 'SALES_USER']), async (req, res) => {
   try {
     const { date, customer_id, customer_name, cage_lot_number, weight, bird_count, rate, payment_status, notes } = req.body;
 
@@ -59,7 +60,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', requireRole(['ADMIN', 'SALES_USER']), async (req, res) => {
   try {
     const { fromDate, toDate } = req.query;
     let sql = `SELECT * FROM sales WHERE 1=1`;
@@ -83,7 +84,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireRole(['ADMIN', 'SALES_USER']), async (req, res) => {
   try {
     const sale = await db.get(`SELECT * FROM sales WHERE id = ?`, [req.params.id]);
     if (!sale) {
@@ -95,7 +96,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRole(['ADMIN']), async (req, res) => {
   try {
     const { date, customer_id, customer_name, cage_lot_number, weight, bird_count, rate, payment_status, notes } = req.body;
 
@@ -147,7 +148,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole(['ADMIN']), async (req, res) => {
   try {
     const sale = await db.get('SELECT * FROM sales WHERE id = ?', [req.params.id]);
     if (!sale) {
@@ -177,7 +178,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-router.get('/bill/:billNumber', async (req, res) => {
+router.get('/bill/:billNumber', requireRole(['ADMIN', 'SALES_USER']), async (req, res) => {
   try {
     const sale = await db.get('SELECT * FROM sales WHERE bill_number = ?', [req.params.billNumber]);
     if (!sale) {
