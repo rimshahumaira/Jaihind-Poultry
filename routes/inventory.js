@@ -9,17 +9,27 @@ const calculateInventory = async (date) => {
   const purchases = await db.all('SELECT * FROM purchases WHERE date = ?', [date]);
 
   const totalSold = sales.reduce((sum, s) => sum + s.weight, 0);
+  const totalSoldBirds = sales.reduce((sum, s) => sum + (s.bird_count || 0), 0);
   const totalPurchased = purchases.reduce((sum, p) => sum + p.weight, 0);
+  const totalPurchasedBirds = purchases.reduce((sum, p) => sum + (p.bird_count || 0), 0);
 
   const inventory = await db.get('SELECT * FROM inventory WHERE date = ?', [date]);
   const openingStock = inventory ? inventory.opening_stock : 0;
+  const openingBirds = inventory ? inventory.opening_birds || 0 : 0;
+
+  const closingStock = openingStock + totalPurchased - totalSold;
+  const closingBirds = openingBirds + totalPurchasedBirds - totalSoldBirds;
 
   return {
     date,
     openingStock,
+    openingBirds,
     totalPurchased,
+    totalPurchasedBirds,
     totalSold,
-    closingStock: openingStock + totalPurchased - totalSold
+    totalSoldBirds,
+    closingStock,
+    closingBirds
   };
 };
 

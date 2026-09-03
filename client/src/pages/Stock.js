@@ -89,7 +89,7 @@ function Stock({ user, onLogout }) {
                 {getStockStatus()}
               </div>
               <div style={{ fontSize: '14px', color: '#999', marginTop: '8px' }}>
-                Current Stock: <strong>{formatQuantity(inventory.closingStock)} kg</strong>
+                Current Stock: <strong>{formatQuantity(inventory.closingStock)} kg</strong> ({inventory.closingBirds || 0} birds)
               </div>
             </div>
 
@@ -126,7 +126,7 @@ function Stock({ user, onLogout }) {
                 </div>
               ) : (
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#2c3e50' }}>
-                  {formatQuantity(inventory.openingStock)} kg
+                  {formatQuantity(inventory.openingStock)} kg <span style={{ fontSize: '14px', color: '#999' }}>({inventory.openingBirds || 0} birds)</span>
                 </div>
               )}
             </div>
@@ -140,12 +140,14 @@ function Stock({ user, onLogout }) {
                   <div style={{ fontSize: '20px', fontWeight: '700', color: '#2c3e50' }}>
                     +{formatQuantity(inventory.totalPurchased)} kg
                   </div>
+                  <div style={{ fontSize: '11px', color: '#666' }}>({inventory.totalPurchasedBirds || 0} birds)</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '12px', color: '#999' }}>Sold Today</div>
                   <div style={{ fontSize: '20px', fontWeight: '700', color: '#e74c3c' }}>
                     -{formatQuantity(inventory.totalSold)} kg
                   </div>
+                  <div style={{ fontSize: '11px', color: '#666' }}>({inventory.totalSoldBirds || 0} birds)</div>
                 </div>
               </div>
 
@@ -160,14 +162,15 @@ function Stock({ user, onLogout }) {
                 <div style={{ fontSize: '28px', fontWeight: '700', color: '#27ae60' }}>
                   {formatQuantity(inventory.closingStock)} kg
                 </div>
+                <div style={{ fontSize: '12px', color: '#666' }}>({inventory.closingBirds || 0} birds)</div>
               </div>
 
               <div style={{ fontSize: '12px', color: '#999', textAlign: 'center', lineHeight: '1.8' }}>
-                <div>{formatQuantity(inventory.openingStock)} (opening)</div>
-                <div>+ {formatQuantity(inventory.totalPurchased)} (purchased)</div>
-                <div>- {formatQuantity(inventory.totalSold)} (sold)</div>
+                <div>{formatQuantity(inventory.openingStock)} kg ({inventory.openingBirds || 0} birds) - opening</div>
+                <div>+ {formatQuantity(inventory.totalPurchased)} kg ({inventory.totalPurchasedBirds || 0} birds) - purchased</div>
+                <div>- {formatQuantity(inventory.totalSold)} kg ({inventory.totalSoldBirds || 0} birds) - sold</div>
                 <div style={{ borderTop: '2px solid #bdc3c7', paddingTop: '8px', marginTop: '8px' }}>
-                  = {formatQuantity(inventory.closingStock)}
+                  = {formatQuantity(inventory.closingStock)} kg ({inventory.closingBirds || 0} birds)
                 </div>
               </div>
             </div>
