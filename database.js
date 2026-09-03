@@ -16,7 +16,7 @@ const dbAsync = {
           CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
             business_id TEXT NOT NULL DEFAULT 'default',
-            username TEXT UNIQUE,
+            username TEXT,
             name TEXT,
             password TEXT,
             pin TEXT,
@@ -44,8 +44,12 @@ const dbAsync = {
 
             // Add username column
             if (!columnNames.includes('username')) {
-              db.run(`ALTER TABLE users ADD COLUMN username TEXT UNIQUE`, (err) => {
-                if (!err) console.log('Added username column to users table');
+              db.run(`ALTER TABLE users ADD COLUMN username TEXT`, (err) => {
+                if (err) {
+                  console.error('Error adding username column:', err.message);
+                } else {
+                  console.log('Added username column to users table');
+                }
               });
             }
 
