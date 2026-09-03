@@ -1,0 +1,6 @@
+# Ensure database files are never tracked or deleted
+poultry.db merge=ours
+poultry.db-journal merge=ours
+data_backups/ merge=ours
+backups/ merge=ours
+*.log merge=ours
