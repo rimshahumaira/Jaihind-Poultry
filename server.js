@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
 const path = require('path');
 const db = require('./database');
 const authRoutes = require('./routes/auth');
@@ -13,6 +14,7 @@ const supplierRoutes = require('./routes/supplier');
 const expenseRoutes = require('./routes/expense');
 const inventoryRoutes = require('./routes/inventory');
 const reportRoutes = require('./routes/report');
+const backupRoutes = require('./routes/backup');
 const { verifyToken } = require('./middleware/auth');
 
 const app = express();
@@ -20,6 +22,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(fileUpload({ limits: { fileSize: 100 * 1024 * 1024 } }));
 
 // Initialize database
 db.initialize().then(() => {
@@ -39,6 +42,7 @@ app.use('/api/supplier', verifyToken, supplierRoutes);
 app.use('/api/expense', verifyToken, expenseRoutes);
 app.use('/api/inventory', verifyToken, inventoryRoutes);
 app.use('/api/report', verifyToken, reportRoutes);
+app.use('/api/backup', verifyToken, backupRoutes);
 
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, 'client/build')));

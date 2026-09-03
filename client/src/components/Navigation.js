@@ -17,7 +17,8 @@ function Navigation({ active, user }) {
       { id: 'stock', icon: '📈', label: 'Stock', path: '/stock', roles: ['ADMIN'] },
       { id: 'reports', icon: '📋', label: 'Reports', path: '/reports', roles: ['ADMIN'] },
       { id: 'expenses', icon: '💸', label: 'Expenses', path: '/expenses', roles: ['ADMIN'] },
-      { id: 'users', icon: '🔐', label: 'Users', path: '/users', roles: ['ADMIN'] }
+      { id: 'users', icon: '🔐', label: 'Users', path: '/users', roles: ['ADMIN'] },
+      { id: 'settings', icon: '⚙️', label: 'Settings', path: '/settings', roles: ['ADMIN'] }
     ];
   }
 
