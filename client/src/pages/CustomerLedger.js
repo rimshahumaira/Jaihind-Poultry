@@ -258,7 +258,7 @@ function CustomerLedger({ user, onLogout }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
                       <div>
                         <div style={{ fontWeight: '600' }}>Bill: {sale.bill_number}</div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>{sale.date}</div>
+                        <div style={{ fontSize: '11px', color: '#27ae60', fontWeight: '500' }}>📅 {sale.date}</div>
                       </div>
                       <span className={`badge ${sale.payment_status === 'Paid' ? 'badge-success' : 'badge-warning'}`}>
                         {sale.payment_status}
@@ -283,6 +283,16 @@ function CustomerLedger({ user, onLogout }) {
                     {relatedPayment.length > 0 && (
                       <div style={{ fontSize: '12px', color: '#27ae60', marginBottom: '8px' }}>
                         Paid: {formatCurrency(totalPaid)} | Balance: {formatCurrency(balance)}
+                      </div>
+                    )}
+
+                    {relatedPayment.length > 0 && (
+                      <div style={{ fontSize: '11px', color: '#666', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #f0f0f0' }}>
+                        {relatedPayment.map((payment, idx) => (
+                          <div key={idx} style={{ marginBottom: '4px' }}>
+                            💳 {formatCurrency(payment.amount)} on {payment.payment_date}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
