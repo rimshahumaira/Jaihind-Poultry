@@ -238,6 +238,49 @@ function Sales({ user, onLogout }) {
     }, 250);
   };
 
+  const handleShareWhatsApp = (sale) => {
+    // Get customer phone number
+    const customer = customers.find(c => c.id === sale.customer_id);
+    const phoneNumber = customer?.phone;
+
+    if (!phoneNumber) {
+      alert('Customer phone number not found. Please add phone number for this customer.');
+      return;
+    }
+
+    // Format phone number (remove spaces and special characters, add country code if needed)
+    let formattedPhone = phoneNumber.replace(/\D/g, '');
+    if (!formattedPhone.startsWith('91')) {
+      formattedPhone = '91' + formattedPhone;
+    }
+
+    // Create message with bill details
+    const message = `
+*BILL DETAILS*
+Bill No: ${sale.bill_number}
+Date: ${sale.date}
+
+Customer: ${sale.customer_name}
+Weight: ${(Math.round(sale.weight * 100) / 100).toFixed(2)} kg
+Birds: ${sale.bird_count || '-'}
+Rate: ₹${(Math.round(sale.rate * 100) / 100).toFixed(2)}/kg
+
+*Total Amount: ₹${(Math.round(sale.amount * 100) / 100).toFixed(2)}*
+Payment Status: ${sale.payment_status}
+
+${businessDetails.business_name ? `From: ${businessDetails.business_name}` : ''}
+${businessDetails.contact_number ? `Contact: ${businessDetails.contact_number}` : ''}
+
+Thank you for your business!
+    `.trim();
+
+    // Encode message for URL
+    const encodedMessage = encodeURIComponent(message);
+
+    // Open WhatsApp
+    window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, '_blank');
+  };
+
   const totalAmount = sales.reduce((sum, s) => sum + s.amount, 0);
   const totalWeight = sales.reduce((sum, s) => sum + s.weight, 0);
 
@@ -750,7 +793,15 @@ function Sales({ user, onLogout }) {
                   Amount: {formatCurrency(sale.amount)}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
+                  <button
+                    onClick={() => handleShareWhatsApp(sale)}
+                    className="btn btn-small"
+                    style={{ background: '#25d366', color: 'white' }}
+                    title="Share bill on WhatsApp"
+                  >
+                    💬 Share
+                  </button>
                   <button
                     onClick={() => {
                       setSelectedSaleForPrint(sale);
