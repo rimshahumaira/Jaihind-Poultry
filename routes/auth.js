@@ -104,13 +104,19 @@ router.post('/setup', async (req, res) => {
   }
 });
 
-// Check setup
+// Check setup - also returns user count and database info
 router.get('/check-setup', async (req, res) => {
   try {
-    const user = await db.get('SELECT * FROM users LIMIT 1');
-    res.json({ isConfigured: !!user });
+    const userCountResult = await db.get('SELECT COUNT(*) as count FROM users');
+    const userCount = userCountResult?.count || 0;
+
+    res.json({
+      isConfigured: userCount > 0,
+      userCount: userCount
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('[Auth] Check setup error:', error.message);
+    res.status(500).json({ error: error.message, isConfigured: false });
   }
 });
 

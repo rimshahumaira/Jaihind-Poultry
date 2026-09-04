@@ -1,18 +1,38 @@
 const fs = require('fs');
 const path = require('path');
 
-const BACKUP_DIR = path.join(__dirname, 'data_backups');
-const DB_PATH = path.join(__dirname, 'poultry.db');
+// Import database configuration to use the same paths
+let DB_PATH;
+let BACKUP_DIR;
 
-// Ensure backup directory exists
-if (!fs.existsSync(BACKUP_DIR)) {
-  fs.mkdirSync(BACKUP_DIR, { recursive: true });
-}
+// Initialize paths lazily to avoid circular dependency
+const initializePaths = () => {
+  if (!DB_PATH) {
+    try {
+      const database = require('./database');
+      DB_PATH = database.dbPath;
+      // Store backups in same directory as database for persistence
+      const dbDir = path.dirname(DB_PATH);
+      BACKUP_DIR = path.join(dbDir, 'data_backups');
+    } catch (e) {
+      // Fallback if there's a circular dependency issue
+      DB_PATH = path.join(__dirname, 'poultry.db');
+      BACKUP_DIR = path.join(__dirname, 'data_backups');
+    }
+  }
+};
 
 const dataProtection = {
   // Create timestamp-based backup before critical operations
   createBackup: (reason = 'scheduled') => {
     try {
+      initializePaths();
+
+      // Ensure backup directory exists
+      if (!fs.existsSync(BACKUP_DIR)) {
+        fs.mkdirSync(BACKUP_DIR, { recursive: true });
+      }
+
       if (!fs.existsSync(DB_PATH)) {
         console.log('[Data Protection] No database file to backup');
         return null;
@@ -35,6 +55,8 @@ const dataProtection = {
   // List all available backups
   listBackups: () => {
     try {
+      initializePaths();
+
       if (!fs.existsSync(BACKUP_DIR)) {
         return [];
       }
@@ -59,6 +81,8 @@ const dataProtection = {
   // Restore from a specific backup
   restoreFromBackup: (backupName) => {
     try {
+      initializePaths();
+
       const backupPath = path.join(BACKUP_DIR, backupName);
 
       if (!fs.existsSync(backupPath)) {
@@ -95,11 +119,14 @@ const dataProtection = {
   // Verify database integrity
   verifyDatabase: () => {
     try {
+      initializePaths();
+
       if (!fs.existsSync(DB_PATH)) {
         console.log('[Data Protection] Database file not found');
         return {
           exists: false,
-          valid: false
+          valid: false,
+          path: DB_PATH
         };
       }
 
@@ -129,6 +156,8 @@ const dataProtection = {
   // Keep only recent backups (delete old ones after keeping N backups)
   cleanupOldBackups: (keepCount = 10) => {
     try {
+      initializePaths();
+
       const backups = dataProtection.listBackups();
 
       if (backups.length > keepCount) {

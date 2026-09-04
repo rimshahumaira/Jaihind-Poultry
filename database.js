@@ -1,10 +1,52 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 
-const dbPath = path.join(__dirname, 'poultry.db');
+// Database path configuration
+// Priority: DATABASE_PATH env var > HOME-based persistent path > current directory
+const getDatabasePath = () => {
+  // 1. Check if DATABASE_PATH environment variable is set (for Hostinger production)
+  if (process.env.DATABASE_PATH) {
+    const envPath = process.env.DATABASE_PATH;
+    const dir = path.dirname(envPath);
+
+    // Ensure directory exists
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    return envPath;
+  }
+
+  // 2. For production without explicit env var: try HOME/.poultry_db (persistent Hostinger path)
+  if (process.env.NODE_ENV === 'production' && process.env.HOME) {
+    const persistentDir = path.join(process.env.HOME, '.poultry_app_data');
+    if (!fs.existsSync(persistentDir)) {
+      fs.mkdirSync(persistentDir, { recursive: true });
+    }
+    return path.join(persistentDir, 'poultry.db');
+  }
+
+  // 3. Default: use current directory (for local development)
+  return path.join(__dirname, 'poultry.db');
+};
+
+const dbPath = getDatabasePath();
+
+console.log('\n=== DATABASE CONFIGURATION ===');
+console.log('Environment:', process.env.NODE_ENV || 'development');
+console.log('Database Path:', dbPath);
+console.log('Database Exists:', fs.existsSync(dbPath));
+if (fs.existsSync(dbPath)) {
+  const stats = fs.statSync(dbPath);
+  console.log('Database Size:', stats.size, 'bytes');
+  console.log('Last Modified:', stats.mtime);
+}
+console.log('==============================\n');
+
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) console.error('Error opening database:', err);
-  else console.log('Connected to SQLite database');
+  else console.log('✓ Connected to SQLite database at:', dbPath);
 });
 
 const dbAsync = {
@@ -362,4 +404,9 @@ const dbAsync = {
   }
 };
 
-module.exports = dbAsync;
+// Export database module with path information
+module.exports = {
+  ...dbAsync,
+  dbPath,
+  getDatabasePath
+};

@@ -26,10 +26,24 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(fileUpload({ limits: { fileSize: 100 * 1024 * 1024 } }));
 
-// Data protection on startup
+// Data protection and database status on startup
+console.log('\n=== APPLICATION STARTUP ===');
+console.log('Node Environment:', process.env.NODE_ENV || 'development');
+console.log('Database Path Set:', !!process.env.DATABASE_PATH, process.env.DATABASE_PATH || '(using default)');
+
+// Initialize database module to ensure paths are set up
+const dbConfig = {
+  path: db.dbPath,
+  getPersistentPath: db.getDatabasePath
+};
+console.log('Database Location:', dbConfig.path);
+
 console.log('\n=== DATA PROTECTION SYSTEM ===');
 const dbStatus = dataProtection.verifyDatabase();
-console.log('Database Status:', dbStatus);
+console.log('Database Exists:', dbStatus.exists);
+console.log('Database Valid:', dbStatus.valid);
+if (dbStatus.size) console.log('Database Size:', dbStatus.size, 'bytes');
+if (dbStatus.lastModified) console.log('Last Modified:', dbStatus.lastModified);
 
 // Create automatic backup on startup
 dataProtection.createBackup('startup');
