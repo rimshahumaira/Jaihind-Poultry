@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API } from '../App';
 import StatusBar from '../components/StatusBar';
+import Navigation from '../components/Navigation';
 
 function CustomerLedger({ user, onLogout }) {
   const { id } = useParams();
@@ -13,6 +14,7 @@ function CustomerLedger({ user, onLogout }) {
   const [error, setError] = useState('');
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     loadBusinessDetails();
@@ -57,6 +59,83 @@ function CustomerLedger({ user, onLogout }) {
     return (Math.round(qty * 100) / 100).toFixed(2);
   };
 
+  const getWeekday = (dateStr) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return days[date.getDay()];
+  };
+
+  const getPeriodString = () => {
+    if (fromDate && toDate) {
+      return `${fromDate} to ${toDate}`;
+    }
+    return 'Full History';
+  };
+
+  const generateThermalContent = () => {
+    return `
+JAI HIND POULTRY
+${businessDetails.address || ''}
+${businessDetails.contact_number ? 'Contact: ' + businessDetails.contact_number : ''}
+${businessDetails.gst_number ? 'GSTIN: ' + businessDetails.gst_number : ''}
+
+CUSTOMER LEDGER STATEMENT
+
+Customer : ${ledger.customer.name}
+Phone    : ${ledger.customer.phone}
+Period   : ${getPeriodString()}
+Printed On : ${new Date().toLocaleString('en-IN')}
+
+═══════════════════════════════════
+
+SALES BILLS (IN ASCENDING ORDER)
+
+No.  Date (Day)        Weight      Rate         Amount
+═══════════════════════════════════
+${ledger.sales.map((sale, idx) => {
+  const weekday = getWeekday(sale.date);
+  const weight = formatQuantity(sale.weight);
+  const rate = (Math.round(sale.rate * 100) / 100).toFixed(2);
+  const amount = formatCurrency(sale.amount);
+  return `${String(idx + 1).padStart(2, ' ')}  ${sale.date} (${weekday})  ${weight.padStart(8, ' ')} kg  ₹${rate.padStart(8, ' ')}  ${amount}`;
+}).join('\n')}
+
+═══════════════════════════════════
+Total Weight: ${formatQuantity(ledger.totalQuantity)} KG
+Total Sales:  ${formatCurrency(ledger.totalAmount)}
+═══════════════════════════════════
+
+${ledger.payments && ledger.payments.length > 0 ? `
+PAYMENTS RECEIVED
+
+No.  Date (Day)        Amount          Mode
+═══════════════════════════════════
+${ledger.payments.map((payment, idx) => {
+  const weekday = getWeekday(payment.date);
+  const mode = payment.payment_mode || 'Cash';
+  return `${String(idx + 1).padStart(2, ' ')}  ${payment.date} (${weekday})  ${formatCurrency(payment.amount).padStart(12, ' ')}  ${mode}`;
+}).join('\n')}
+
+═══════════════════════════════════
+Total Paid: ${formatCurrency(ledger.totalPaid)}
+═══════════════════════════════════
+` : ''}
+
+LEDGER SUMMARY
+
+Total Weight      : ${formatQuantity(ledger.totalQuantity)} KG
+Total Sales       : ${formatCurrency(ledger.totalAmount)}
+Total Paid        : ${formatCurrency(ledger.totalPaid)}
+Outstanding Due   : ${formatCurrency(ledger.totalAmount - ledger.totalPaid)}
+
+═══════════════════════════════════
+
+Thank you for your business!
+
+JAI HIND POULTRY
+    `;
+  };
+
   const handleThermalPrint = () => {
     const printWindow = window.open('', '', 'width=800,height=600');
     printWindow.document.write(printRef.current.innerHTML);
@@ -66,6 +145,50 @@ function CustomerLedger({ user, onLogout }) {
       printWindow.focus();
       printWindow.print();
     }, 250);
+  };
+
+  const handleSendPDF = async () => {
+    try {
+      setSharing(true);
+      const content = generateThermalContent();
+      const blob = new Blob([content], { type: 'text/plain' });
+      const file = new File([blob], `${ledger.customer.name}_Ledger_${new Date().toISOString().split('T')[0]}.txt`, { type: 'text/plain' });
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `${ledger.customer.name} Ledger`,
+            text: `Customer Ledger for ${ledger.customer.name}`
+          });
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.error('Share error:', err);
+          }
+        }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    const message = `Jai Hind Poultry\nCustomer Ledger\nCustomer: ${ledger.customer.name}\nPeriod: ${getPeriodString()}\nTotal Sales: ${formatCurrency(ledger.totalAmount)}\nTotal Paid: ${formatCurrency(ledger.totalPaid)}\nOutstanding: ${formatCurrency(ledger.totalAmount - ledger.totalPaid)}`;
+    const encodedMessage = encodeURIComponent(message);
+    const phone = ledger.customer.phone ? ledger.customer.phone.replace(/\D/g, '') : '';
+    const whatsappURL = phone ? `https://wa.me/${phone}?text=${encodedMessage}` : `https://wa.me/?text=${encodedMessage}`;
+    window.open(whatsappURL, '_blank');
   };
 
   if (loading) {
@@ -103,8 +226,8 @@ function CustomerLedger({ user, onLogout }) {
       <div ref={printRef} style={{ display: 'none' }}>
         <div style={{
           fontFamily: 'monospace',
-          fontSize: '12px',
-          lineHeight: '1.2',
+          fontSize: '11px',
+          lineHeight: '1.3',
           padding: '5mm',
           maxWidth: '80mm',
           whiteSpace: 'pre-wrap',
@@ -112,84 +235,136 @@ function CustomerLedger({ user, onLogout }) {
           backgroundColor: 'white',
           color: 'black'
         }}>
-          <div style={{ textAlign: 'center', marginBottom: '5px', fontWeight: 'bold' }}>{businessDetails.business_name || 'POULTRY TRADER APP'}</div>
+          <div style={{ textAlign: 'center', marginBottom: '3px', fontWeight: 'bold', fontSize: '12px' }}>{businessDetails.business_name || 'JAI HIND POULTRY'}</div>
           {businessDetails.address && (
-            <div style={{ textAlign: 'center', marginBottom: '3px', fontSize: '10px' }}>{businessDetails.address}</div>
+            <div style={{ textAlign: 'center', marginBottom: '2px', fontSize: '9px' }}>{businessDetails.address}</div>
           )}
           {businessDetails.contact_number && (
-            <div style={{ textAlign: 'center', marginBottom: '3px', fontSize: '10px' }}>Contact: {businessDetails.contact_number}</div>
+            <div style={{ textAlign: 'center', marginBottom: '2px', fontSize: '9px' }}>Contact: {businessDetails.contact_number}</div>
           )}
           {businessDetails.gst_number && (
-            <div style={{ textAlign: 'center', marginBottom: '5px', fontSize: '10px' }}>GSTIN: {businessDetails.gst_number}</div>
+            <div style={{ textAlign: 'center', marginBottom: '5px', fontSize: '9px' }}>GSTIN: {businessDetails.gst_number}</div>
           )}
-          <div style={{ textAlign: 'center', marginBottom: '10px', fontSize: '11px' }}>SALES STATEMENT</div>
-          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
 
-          <div style={{ marginBottom: '8px', fontSize: '11px' }}>
-            <div>Customer: {ledger.customer.name}</div>
-            <div>Phone:    {ledger.customer.phone}</div>
-            <div>Date:     {fromDate && toDate ? `${fromDate} to ${toDate}` : new Date().toISOString().split('T')[0]}</div>
-          </div>
+          <div style={{ borderBottom: '1px solid #000', marginBottom: '6px' }}></div>
 
-          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+          <div style={{ textAlign: 'center', marginBottom: '8px', fontWeight: 'bold', fontSize: '11px' }}>CUSTOMER LEDGER STATEMENT</div>
 
           <div style={{ marginBottom: '8px', fontSize: '10px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.2fr 0.8fr 1.5fr', gap: '0px', marginBottom: '4px' }}>
-              <div>Date</div>
-              <div style={{ textAlign: 'center' }}>Weight</div>
+            <div>Customer : {ledger.customer.name}</div>
+            <div>Phone    : {ledger.customer.phone}</div>
+            <div>Period   : {getPeriodString()}</div>
+            <div>Printed On : {new Date().toLocaleString('en-IN')}</div>
+          </div>
+
+          <div style={{ borderBottom: '1px solid #000', marginBottom: '6px' }}></div>
+
+          <div style={{ marginBottom: '8px', fontWeight: 'bold', fontSize: '10px' }}>SALES BILLS (IN ASCENDING ORDER)</div>
+
+          <div style={{ marginBottom: '6px', fontSize: '9px' }}>
+            <div style={{ marginBottom: '3px', display: 'grid', gridTemplateColumns: '1fr 2.5fr 1.5fr 1.2fr 1.8fr', gap: '2px' }}>
+              <div>No.</div>
+              <div>Date (Day)</div>
+              <div style={{ textAlign: 'right' }}>Weight</div>
               <div style={{ textAlign: 'center' }}>Rate</div>
               <div style={{ textAlign: 'right' }}>Amount</div>
             </div>
-            <div style={{ borderBottom: '1px solid black', marginBottom: '4px' }}></div>
-            {ledger.sales.map((sale, idx) => (
-              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.2fr 0.8fr 1.5fr', gap: '0px', marginBottom: '2px' }}>
-                <div>{sale.date}</div>
-                <div style={{ textAlign: 'center' }}>{formatQuantity(sale.weight)}kg</div>
-                <div style={{ textAlign: 'center' }}>₹{(Math.round(sale.rate * 100) / 100).toFixed(2)}</div>
-                <div style={{ textAlign: 'right' }}>{formatCurrency(sale.amount)}</div>
+            <div style={{ borderBottom: '1px solid #000', marginBottom: '3px' }}></div>
+            {ledger.sales.map((sale, idx) => {
+              const weekday = getWeekday(sale.date);
+              return (
+                <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 2.5fr 1.5fr 1.2fr 1.8fr', gap: '2px', marginBottom: '2px' }}>
+                  <div>{idx + 1}</div>
+                  <div>{sale.date} ({weekday})</div>
+                  <div style={{ textAlign: 'right' }}>{formatQuantity(sale.weight)}kg</div>
+                  <div style={{ textAlign: 'center' }}>₹{(Math.round(sale.rate * 100) / 100).toFixed(2)}</div>
+                  <div style={{ textAlign: 'right' }}>{formatCurrency(sale.amount)}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ borderBottom: '1px solid #000', marginBottom: '6px' }}></div>
+
+          <div style={{ marginBottom: '8px', fontSize: '10px', textAlign: 'right' }}>
+            <div>Total Weight: {formatQuantity(ledger.totalQuantity)} KG</div>
+            <div>Total Sales:  {formatCurrency(ledger.totalAmount)}</div>
+          </div>
+
+          {ledger.payments && ledger.payments.length > 0 && (
+            <>
+              <div style={{ borderBottom: '1px solid #000', marginBottom: '6px' }}></div>
+
+              <div style={{ marginBottom: '8px', fontWeight: 'bold', fontSize: '10px' }}>PAYMENTS RECEIVED</div>
+
+              <div style={{ marginBottom: '6px', fontSize: '9px' }}>
+                <div style={{ marginBottom: '3px', display: 'grid', gridTemplateColumns: '1fr 2.5fr 1.5fr 2fr 1.2fr', gap: '2px' }}>
+                  <div>No.</div>
+                  <div>Date (Day)</div>
+                  <div style={{ textAlign: 'right' }}>Amount</div>
+                  <div>Mode</div>
+                  <div style={{ textAlign: 'center' }}>Remarks</div>
+                </div>
+                <div style={{ borderBottom: '1px solid #000', marginBottom: '3px' }}></div>
+                {ledger.payments.map((payment, idx) => {
+                  const weekday = getWeekday(payment.date);
+                  const mode = payment.payment_mode || 'Cash';
+                  const remarks = payment.notes || '-';
+                  return (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 2.5fr 1.5fr 2fr 1.2fr', gap: '2px', marginBottom: '2px' }}>
+                      <div>{idx + 1}</div>
+                      <div>{payment.date} ({weekday})</div>
+                      <div style={{ textAlign: 'right' }}>{formatCurrency(payment.amount)}</div>
+                      <div>{mode}</div>
+                      <div style={{ textAlign: 'center', fontSize: '8px' }}>{remarks}</div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+
+              <div style={{ borderBottom: '1px solid #000', marginBottom: '6px' }}></div>
+
+              <div style={{ marginBottom: '8px', fontSize: '10px', textAlign: 'right' }}>
+                <div>Total Paid: {formatCurrency(ledger.totalPaid)}</div>
+              </div>
+            </>
+          )}
+
+          <div style={{ borderBottom: '1px solid #000', marginBottom: '6px' }}></div>
+
+          <div style={{ marginBottom: '8px', fontWeight: 'bold', fontSize: '10px' }}>LEDGER SUMMARY</div>
+
+          <div style={{ marginBottom: '8px', fontSize: '10px' }}>
+            <div>Total Weight      : {formatQuantity(ledger.totalQuantity)} KG</div>
+            <div>Total Sales       : {formatCurrency(ledger.totalAmount)}</div>
+            <div>Total Paid        : {formatCurrency(ledger.totalPaid)}</div>
+            <div>Outstanding Due   : {formatCurrency(ledger.totalAmount - ledger.totalPaid)}</div>
           </div>
 
-          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
+          <div style={{ borderBottom: '1px solid #000', marginBottom: '6px' }}></div>
 
-          <div style={{ marginBottom: '8px', fontSize: '11px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-              <span>TOTAL WEIGHT:</span>
-              <span>{formatQuantity(ledger.totalQuantity)} KG</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-              <span>TOTAL SALES:</span>
-              <span>{formatCurrency(ledger.totalAmount)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-              <span>PAID:</span>
-              <span>{formatCurrency(ledger.totalPaid)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
-              <span>DUE:</span>
-              <span>{formatCurrency(ledger.outstandingBalance)}</span>
-            </div>
-          </div>
+          <div style={{ textAlign: 'center', fontSize: '10px', marginTop: '8px' }}>Thank you for your business!</div>
 
-          <div style={{ borderBottom: '1px solid black', marginBottom: '8px' }}></div>
-
-          <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '8px' }}>
-            Printed: {new Date().toLocaleString('en-IN')}
-          </div>
-
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>POULTRY TRADER APP</div>
-          <div style={{ borderBottom: '1px solid black' }}></div>
+          <div style={{ textAlign: 'center', marginTop: '8px', fontWeight: 'bold', fontSize: '11px' }}>JAI HIND POULTRY</div>
         </div>
       </div>
 
       <div className="main-content container">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
           <button onClick={() => navigate('/customers')} className="btn btn-secondary btn-block">
-            ← Back to Customers
+            ← Back
           </button>
           <button onClick={handleThermalPrint} className="btn btn-block" style={{ background: '#34495e', color: 'white' }}>
-            🖨️ Thermal Print
+            🖨️ Print
+          </button>
+          <button onClick={handleSendPDF} disabled={sharing} className="btn btn-block" style={{ background: '#3498db', color: 'white' }}>
+            {sharing ? '⏳ Sending...' : '📄 Send PDF'}
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+          <button onClick={handleWhatsAppShare} className="btn btn-block" style={{ background: '#25d366', color: 'white' }}>
+            💬 Send WhatsApp
           </button>
         </div>
 
@@ -325,6 +500,8 @@ function CustomerLedger({ user, onLogout }) {
           </div>
         </div>
       </div>
+
+      <Navigation user={user} active="customers" />
     </>
   );
 }

@@ -74,25 +74,29 @@ router.delete('/:id', requireRole(['ADMIN']), async (req, res) => {
 router.get('/:id/ledger', requireRole(['ADMIN', 'SALES_USER']), async (req, res) => {
   try {
     const { fromDate, toDate } = req.query;
-    let sql = `SELECT * FROM sales WHERE customer_id = ?`;
-    const params = [req.params.id];
+    let salesSql = `SELECT * FROM sales WHERE customer_id = ?`;
+    let paymentsSql = `SELECT * FROM payments WHERE customer_id = ?`;
+    const salesParams = [req.params.id];
+    const paymentsParams = [req.params.id];
 
     if (fromDate) {
-      sql += ` AND date >= ?`;
-      params.push(fromDate);
+      salesSql += ` AND date >= ?`;
+      paymentsSql += ` AND date >= ?`;
+      salesParams.push(fromDate);
+      paymentsParams.push(fromDate);
     }
     if (toDate) {
-      sql += ` AND date <= ?`;
-      params.push(toDate);
+      salesSql += ` AND date <= ?`;
+      paymentsSql += ` AND date <= ?`;
+      salesParams.push(toDate);
+      paymentsParams.push(toDate);
     }
 
-    sql += ` ORDER BY date DESC`;
+    salesSql += ` ORDER BY date ASC`;
+    paymentsSql += ` ORDER BY date ASC`;
 
-    const sales = await db.all(sql, params);
-    const payments = await db.all(
-      `SELECT * FROM payments WHERE customer_id = ? ORDER BY date DESC`,
-      [req.params.id]
-    );
+    const sales = await db.all(salesSql, salesParams);
+    const payments = await db.all(paymentsSql, paymentsParams);
 
     const customer = await db.get('SELECT * FROM customers WHERE id = ?', [req.params.id]);
 
@@ -112,15 +116,16 @@ router.get('/:id/ledger', requireRole(['ADMIN', 'SALES_USER']), async (req, res)
 
 router.post('/:id/pay', async (req, res) => {
   try {
-    const { amount, saleId, notes, payment_date } = req.body;
+    const { amount, saleId, notes, payment_date, payment_mode } = req.body;
     const paymentId = uuidv4();
     const paymentReceivedDate = payment_date || new Date().toISOString().split('T')[0];
+    const mode = payment_mode || 'Cash';
 
     // Insert payment record (sale_id can be NULL for general payments)
     await db.run(
-      `INSERT INTO payments (id, sale_id, customer_id, amount, date, notes)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [paymentId, saleId || null, req.params.id, amount, paymentReceivedDate, notes || null]
+      `INSERT INTO payments (id, sale_id, customer_id, amount, date, notes, payment_mode)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [paymentId, saleId || null, req.params.id, amount, paymentReceivedDate, notes || null, mode]
     );
 
     // Update customer outstanding amount

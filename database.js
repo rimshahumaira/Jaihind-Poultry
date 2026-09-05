@@ -274,6 +274,7 @@ const dbAsync = {
             amount REAL NOT NULL,
             date DATE NOT NULL,
             notes TEXT,
+            payment_mode TEXT DEFAULT 'Cash',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (sale_id) REFERENCES sales(id),
             FOREIGN KEY (customer_id) REFERENCES customers(id)
@@ -282,18 +283,27 @@ const dbAsync = {
           if (err && !err.message.includes('already exists')) reject(err);
         });
 
-        // Alter payments table to add notes column if it doesn't exist
+        // Alter payments table to add notes and payment_mode columns if they don't exist
         db.run(`
           PRAGMA table_info(payments);
         `, (err, columns) => {
           if (!err) {
             db.all(`PRAGMA table_info(payments)`, (err, columns) => {
-              if (columns && !columns.some(c => c.name === 'notes')) {
-                db.run(`ALTER TABLE payments ADD COLUMN notes TEXT`, (err) => {
-                  if (err && !err.message.includes('already exists') && !err.message.includes('duplicate')) {
-                    console.log('Added notes column to payments table');
-                  }
-                });
+              if (columns) {
+                if (!columns.some(c => c.name === 'notes')) {
+                  db.run(`ALTER TABLE payments ADD COLUMN notes TEXT`, (err) => {
+                    if (err && !err.message.includes('already exists') && !err.message.includes('duplicate')) {
+                      console.log('Added notes column to payments table');
+                    }
+                  });
+                }
+                if (!columns.some(c => c.name === 'payment_mode')) {
+                  db.run(`ALTER TABLE payments ADD COLUMN payment_mode TEXT DEFAULT 'Cash'`, (err) => {
+                    if (err && !err.message.includes('already exists') && !err.message.includes('duplicate')) {
+                      console.log('Added payment_mode column to payments table');
+                    }
+                  });
+                }
               }
             });
           }
