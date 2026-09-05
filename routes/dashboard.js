@@ -64,6 +64,35 @@ const calculateDailySummary = async (date) => {
   };
 };
 
+const calculateMonthSummary = async () => {
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const todayStr = today.toISOString().split('T')[0];
+  const firstDayStr = firstDayOfMonth.toISOString().split('T')[0];
+
+  const sales = await db.all('SELECT * FROM sales WHERE date >= ? AND date <= ?', [firstDayStr, todayStr]);
+  const purchases = await db.all('SELECT * FROM purchases WHERE date >= ? AND date <= ?', [firstDayStr, todayStr]);
+  const expenses = await db.all('SELECT * FROM expenses WHERE date >= ? AND date <= ?', [firstDayStr, todayStr]);
+
+  const totalSoldKg = sales.reduce((sum, s) => sum + s.weight, 0);
+  const totalSalesAmount = sales.reduce((sum, s) => sum + s.amount, 0);
+  const totalPurchaseAmount = purchases.reduce((sum, p) => sum + p.amount, 0);
+
+  let totalExpenses = 0;
+  expenses.forEach(e => {
+    totalExpenses += e.amount;
+  });
+
+  const COGS = totalPurchaseAmount;
+  const grossProfit = totalSalesAmount - COGS;
+  const netProfit = grossProfit - totalExpenses;
+
+  return {
+    currentMonthSalesKg: Math.round(totalSoldKg * 100) / 100,
+    currentMonthProfit: Math.round(netProfit * 100) / 100
+  };
+};
+
 router.get('/:date', requireRole(['ADMIN']), async (req, res) => {
   try {
     const summary = await calculateDailySummary(req.params.date);
@@ -128,6 +157,15 @@ router.post('/summary', requireRole(['ADMIN']), async (req, res) => {
       );
     }
 
+    res.json(summary);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/month-summary/current', requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const summary = await calculateMonthSummary();
     res.json(summary);
   } catch (error) {
     res.status(500).json({ error: error.message });

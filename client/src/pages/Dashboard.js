@@ -8,11 +8,13 @@ function Dashboard({ user, onLogout }) {
   const navigate = useNavigate();
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [summary, setSummary] = useState(null);
+  const [monthSummary, setMonthSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadSummary();
+    loadMonthSummary();
   }, [date]);
 
   const loadSummary = async () => {
@@ -26,6 +28,15 @@ function Dashboard({ user, onLogout }) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMonthSummary = async () => {
+    try {
+      const res = await API.get('/dashboard/month-summary/current');
+      setMonthSummary(res.data);
+    } catch (err) {
+      console.error('Failed to load month summary:', err);
     }
   };
 
@@ -76,6 +87,19 @@ function Dashboard({ user, onLogout }) {
             ))}
           </select>
         </div>
+
+        {monthSummary && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <div className="stat-box" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', borderRadius: '8px' }}>
+              <div className="stat-label" style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '12px' }}>📦 Current Month Sales</div>
+              <div className="stat-value" style={{ color: 'white', fontSize: '28px', fontWeight: '700' }}>{formatQuantity(monthSummary.currentMonthSalesKg)}</div>
+            </div>
+            <div className="stat-box" style={{ background: 'linear-gradient(135deg, #27ae60 0%, #16a085 100%)', color: 'white', borderRadius: '8px' }}>
+              <div className="stat-label" style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '12px' }}>💰 Current Month Profit</div>
+              <div className="stat-value" style={{ color: 'white', fontSize: '28px', fontWeight: '700' }}>{formatCurrency(monthSummary.currentMonthProfit)}</div>
+            </div>
+          </div>
+        )}
 
         {summary && (
           <>
