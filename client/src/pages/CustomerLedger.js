@@ -90,14 +90,15 @@ Printed On : ${new Date().toLocaleString('en-IN')}
 
 SALES BILLS (IN ASCENDING ORDER)
 
-No.  Date (Day)        Weight      Rate         Amount
-═══════════════════════════════════
+No.  Date (Day)        Weight      Rate         Amount  Created By
+═══════════════════════════════════════════════════════════════════════════
 ${ledger.sales.map((sale, idx) => {
   const weekday = getWeekday(sale.date);
   const weight = formatQuantity(sale.weight);
   const rate = (Math.round(sale.rate * 100) / 100).toFixed(2);
   const amount = formatCurrency(sale.amount);
-  return `${String(idx + 1).padStart(2, ' ')}  ${sale.date} (${weekday})  ${weight.padStart(8, ' ')} kg  ₹${rate.padStart(8, ' ')}  ${amount}`;
+  const createdBy = sale.created_by_username ? `${sale.created_by_username} (${sale.created_by_role})` : 'Admin';
+  return `${String(idx + 1).padStart(2, ' ')}  ${sale.date} (${weekday})  ${weight.padStart(8, ' ')} kg  ₹${rate.padStart(8, ' ')}  ${amount}  ${createdBy}`;
 }).join('\n')}
 
 ═══════════════════════════════════
@@ -184,7 +185,19 @@ JAI HIND POULTRY
   };
 
   const handleWhatsAppShare = () => {
-    const message = `Jai Hind Poultry\nCustomer Ledger\nCustomer: ${ledger.customer.name}\nPeriod: ${getPeriodString()}\nTotal Sales: ${formatCurrency(ledger.totalAmount)}\nTotal Paid: ${formatCurrency(ledger.totalPaid)}\nOutstanding: ${formatCurrency(ledger.totalAmount - ledger.totalPaid)}`;
+    const uniqueCreators = new Set();
+    ledger.sales.forEach(sale => {
+      if (sale.created_by_username) {
+        uniqueCreators.add(`${sale.created_by_username} (${sale.created_by_role})`);
+      }
+    });
+
+    let creatorsText = '';
+    if (uniqueCreators.size > 0) {
+      creatorsText = `\nRecorded by: ${Array.from(uniqueCreators).join(', ')}`;
+    }
+
+    const message = `Jai Hind Poultry\nCustomer Ledger\nCustomer: ${ledger.customer.name}\nPeriod: ${getPeriodString()}\nTotal Sales: ${formatCurrency(ledger.totalAmount)}\nTotal Paid: ${formatCurrency(ledger.totalPaid)}\nOutstanding: ${formatCurrency(ledger.totalAmount - ledger.totalPaid)}${creatorsText}`;
     const encodedMessage = encodeURIComponent(message);
     const phone = ledger.customer.phone ? ledger.customer.phone.replace(/\D/g, '') : '';
     const whatsappURL = phone ? `https://wa.me/${phone}?text=${encodedMessage}` : `https://wa.me/?text=${encodedMessage}`;
@@ -262,23 +275,26 @@ JAI HIND POULTRY
           <div style={{ marginBottom: '8px', fontWeight: 'bold', fontSize: '10px' }}>SALES BILLS (IN ASCENDING ORDER)</div>
 
           <div style={{ marginBottom: '6px', fontSize: '9px' }}>
-            <div style={{ marginBottom: '3px', display: 'grid', gridTemplateColumns: '1fr 2.5fr 1.5fr 1.2fr 1.8fr', gap: '2px' }}>
+            <div style={{ marginBottom: '3px', display: 'grid', gridTemplateColumns: '1fr 2.5fr 1.5fr 1.2fr 1.8fr 2fr', gap: '2px' }}>
               <div>No.</div>
               <div>Date (Day)</div>
               <div style={{ textAlign: 'right' }}>Weight</div>
               <div style={{ textAlign: 'center' }}>Rate</div>
               <div style={{ textAlign: 'right' }}>Amount</div>
+              <div>Created By</div>
             </div>
             <div style={{ borderBottom: '1px solid #000', marginBottom: '3px' }}></div>
             {ledger.sales.map((sale, idx) => {
               const weekday = getWeekday(sale.date);
+              const createdBy = sale.created_by_username ? `${sale.created_by_username} (${sale.created_by_role})` : 'Admin';
               return (
-                <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 2.5fr 1.5fr 1.2fr 1.8fr', gap: '2px', marginBottom: '2px' }}>
+                <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 2.5fr 1.5fr 1.2fr 1.8fr 2fr', gap: '2px', marginBottom: '2px' }}>
                   <div>{idx + 1}</div>
                   <div>{sale.date} ({weekday})</div>
                   <div style={{ textAlign: 'right' }}>{formatQuantity(sale.weight)}kg</div>
                   <div style={{ textAlign: 'center' }}>₹{(Math.round(sale.rate * 100) / 100).toFixed(2)}</div>
                   <div style={{ textAlign: 'right' }}>{formatCurrency(sale.amount)}</div>
+                  <div style={{ fontSize: '8px' }}>{createdBy}</div>
                 </div>
               );
             })}

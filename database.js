@@ -179,6 +179,9 @@ const dbAsync = {
             amount REAL NOT NULL,
             payment_status TEXT DEFAULT 'Pending',
             notes TEXT,
+            created_by_user_id TEXT,
+            created_by_username TEXT,
+            created_by_role TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (customer_id) REFERENCES customers(id)
@@ -191,10 +194,27 @@ const dbAsync = {
         db.run(`PRAGMA table_info(sales)`, (err, columns) => {
           if (!err && columns) {
             db.all(`PRAGMA table_info(sales)`, (err, columns) => {
-              if (columns && !columns.some(c => c.name === 'bird_count')) {
-                db.run(`ALTER TABLE sales ADD COLUMN bird_count INTEGER DEFAULT 0`, (err) => {
-                  if (!err) console.log('Added bird_count column to sales table');
-                });
+              if (columns) {
+                if (!columns.some(c => c.name === 'bird_count')) {
+                  db.run(`ALTER TABLE sales ADD COLUMN bird_count INTEGER DEFAULT 0`, (err) => {
+                    if (!err) console.log('Added bird_count column to sales table');
+                  });
+                }
+                if (!columns.some(c => c.name === 'created_by_user_id')) {
+                  db.run(`ALTER TABLE sales ADD COLUMN created_by_user_id TEXT`, (err) => {
+                    if (!err) console.log('Added created_by_user_id column to sales table');
+                  });
+                }
+                if (!columns.some(c => c.name === 'created_by_username')) {
+                  db.run(`ALTER TABLE sales ADD COLUMN created_by_username TEXT`, (err) => {
+                    if (!err) console.log('Added created_by_username column to sales table');
+                  });
+                }
+                if (!columns.some(c => c.name === 'created_by_role')) {
+                  db.run(`ALTER TABLE sales ADD COLUMN created_by_role TEXT`, (err) => {
+                    if (!err) console.log('Added created_by_role column to sales table');
+                  });
+                }
               }
             });
           }

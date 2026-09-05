@@ -36,9 +36,9 @@ router.post('/', requireRole(['ADMIN', 'SALES_USER']), async (req, res) => {
     const amount = weight * rate;
 
     await db.run(
-      `INSERT INTO sales (id, bill_number, date, customer_id, customer_name, cage_lot_number, weight, bird_count, rate, amount, payment_status, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, bill_number, date, customer_id, customer_name, cage_lot_number || null, weight, bird_count || 0, rate, amount, payment_status || 'Pending', notes || null]
+      `INSERT INTO sales (id, bill_number, date, customer_id, customer_name, cage_lot_number, weight, bird_count, rate, amount, payment_status, notes, created_by_user_id, created_by_username, created_by_role)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, bill_number, date, customer_id, customer_name, cage_lot_number || null, weight, bird_count || 0, rate, amount, payment_status || 'Pending', notes || null, req.user.id, req.user.username, req.user.role]
     );
 
     // Update customer stats
