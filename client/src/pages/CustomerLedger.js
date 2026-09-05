@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import html2pdf from 'html2pdf.js';
 import { API } from '../App';
 import StatusBar from '../components/StatusBar';
 import Navigation from '../components/Navigation';
@@ -148,35 +149,172 @@ JAI HIND POULTRY
     }, 250);
   };
 
+  const generatePDFContent = () => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.6; }
+          .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+          .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; }
+          .business-name { font-size: 20px; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+          .business-info { font-size: 11px; color: #666; }
+          .statement-title { font-size: 16px; font-weight: bold; color: #2c3e50; text-align: center; margin: 20px 0; }
+          .customer-info { background: #f8f9fa; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-size: 12px; }
+          .info-row { display: flex; justify-content: space-between; margin: 6px 0; }
+          .section-title { font-size: 13px; font-weight: bold; color: #2c3e50; margin: 18px 0 10px 0; padding-bottom: 8px; border-bottom: 1px solid #ddd; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px; }
+          th { background: #2c3e50; color: white; padding: 10px; text-align: left; font-weight: 600; }
+          th.right, td.right { text-align: right; }
+          td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .summary-box { background: #ecf0f1; padding: 12px; border-radius: 4px; margin-top: 15px; font-size: 12px; }
+          .summary-row { display: flex; justify-content: space-between; margin: 6px 0; font-weight: 600; }
+          .footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 2px solid #2c3e50; font-size: 11px; color: #666; }
+          .amount { color: #27ae60; font-weight: 600; }
+          @media print { body { margin: 0; padding: 0; } .container { padding: 10px; } }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="business-name">${businessDetails.business_name || 'JAI HIND POULTRY'}</div>
+            ${businessDetails.address ? `<div class="business-info">${businessDetails.address}</div>` : ''}
+            ${businessDetails.contact_number ? `<div class="business-info">Contact: ${businessDetails.contact_number}</div>` : ''}
+            ${businessDetails.gst_number ? `<div class="business-info">GSTIN: ${businessDetails.gst_number}</div>` : ''}
+          </div>
+
+          <div class="statement-title">CUSTOMER LEDGER STATEMENT</div>
+
+          <div class="customer-info">
+            <div class="info-row"><span><strong>Customer:</strong></span><span>${ledger.customer.name}</span></div>
+            <div class="info-row"><span><strong>Phone:</strong></span><span>${ledger.customer.phone || '-'}</span></div>
+            <div class="info-row"><span><strong>Period:</strong></span><span>${getPeriodString()}</span></div>
+            <div class="info-row"><span><strong>Generated:</strong></span><span>${new Date().toLocaleString('en-IN')}</span></div>
+          </div>
+
+          <div class="section-title">SALES BILLS (IN ASCENDING ORDER)</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 5%;">No.</th>
+                <th style="width: 18%;">Date</th>
+                <th class="right" style="width: 15%;">Weight (kg)</th>
+                <th class="right" style="width: 14%;">Rate</th>
+                <th class="right" style="width: 20%;">Amount</th>
+                <th style="width: 28%;">Created By</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ledger.sales.map((sale, idx) => {
+                const weekday = getWeekday(sale.date);
+                const createdBy = sale.created_by_username ? `${sale.created_by_username} (${sale.created_by_role})` : 'Admin';
+                return `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td>${sale.date} (${weekday})</td>
+                    <td class="right">${formatQuantity(sale.weight)}</td>
+                    <td class="right">₹${(Math.round(sale.rate * 100) / 100).toFixed(2)}</td>
+                    <td class="right amount">${formatCurrency(sale.amount)}</td>
+                    <td>${createdBy}</td>
+                  </tr>
+                `;
+              }).join('')}
+              <tr style="background: #ecf0f1; font-weight: 600;">
+                <td colspan="2"><strong>TOTAL</strong></td>
+                <td class="right"><strong>${formatQuantity(ledger.totalQuantity)}</strong></td>
+                <td class="right"></td>
+                <td class="right amount"><strong>${formatCurrency(ledger.totalAmount)}</strong></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+
+          ${ledger.payments && ledger.payments.length > 0 ? `
+            <div class="section-title">PAYMENTS RECEIVED</div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 5%;">No.</th>
+                  <th style="width: 20%;">Date</th>
+                  <th class="right" style="width: 20%;">Amount</th>
+                  <th style="width: 20%;">Mode</th>
+                  <th style="width: 35%;">Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${ledger.payments.map((payment, idx) => {
+                  const weekday = getWeekday(payment.date);
+                  const mode = payment.payment_mode || 'Cash';
+                  const remarks = payment.notes || '-';
+                  return `
+                    <tr>
+                      <td>${idx + 1}</td>
+                      <td>${payment.date} (${weekday})</td>
+                      <td class="right amount">${formatCurrency(payment.amount)}</td>
+                      <td>${mode}</td>
+                      <td>${remarks}</td>
+                    </tr>
+                  `;
+                }).join('')}
+                <tr style="background: #ecf0f1; font-weight: 600;">
+                  <td colspan="2"><strong>TOTAL PAID</strong></td>
+                  <td class="right amount"><strong>${formatCurrency(ledger.totalPaid)}</strong></td>
+                  <td colspan="2"></td>
+                </tr>
+              </tbody>
+            </table>
+          ` : ''}
+
+          <div class="summary-box">
+            <div class="section-title" style="margin: 0 0 10px 0; border: none;">LEDGER SUMMARY</div>
+            <div class="summary-row">
+              <span>Total Weight:</span>
+              <span>${formatQuantity(ledger.totalQuantity)} KG</span>
+            </div>
+            <div class="summary-row">
+              <span>Total Sales:</span>
+              <span class="amount">${formatCurrency(ledger.totalAmount)}</span>
+            </div>
+            <div class="summary-row">
+              <span>Total Paid:</span>
+              <span class="amount">${formatCurrency(ledger.totalPaid)}</span>
+            </div>
+            <div class="summary-row" style="color: #e74c3c; margin-top: 8px; padding-top: 8px; border-top: 1px solid #bbb;">
+              <span>Outstanding Due:</span>
+              <span>${formatCurrency(ledger.totalAmount - ledger.totalPaid)}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for your business!</p>
+            <p style="margin-top: 8px; font-weight: bold;">JAI HIND POULTRY</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
   const handleSendPDF = async () => {
     try {
       setSharing(true);
-      const content = generateThermalContent();
-      const blob = new Blob([content], { type: 'text/plain' });
-      const file = new File([blob], `${ledger.customer.name}_Ledger_${new Date().toISOString().split('T')[0]}.txt`, { type: 'text/plain' });
+      const htmlContent = generatePDFContent();
+      const element = document.createElement('div');
+      element.innerHTML = htmlContent;
 
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: `${ledger.customer.name} Ledger`,
-            text: `Customer Ledger for ${ledger.customer.name}`
-          });
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.error('Share error:', err);
-          }
-        }
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
+      const opt = {
+        margin: 10,
+        filename: `${ledger.customer.name}_Ledger_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+      };
+
+      html2pdf().set(opt).from(element).save();
     } catch (err) {
       console.error('Error generating PDF:', err);
     } finally {
@@ -275,11 +413,11 @@ JAI HIND POULTRY
           <div style={{ marginBottom: '8px', fontWeight: 'bold', fontSize: '10px' }}>SALES BILLS (IN ASCENDING ORDER)</div>
 
           <div style={{ marginBottom: '6px', fontSize: '9px' }}>
-            <div style={{ marginBottom: '3px', display: 'grid', gridTemplateColumns: '1fr 2.5fr 1.5fr 1.2fr 1.8fr 2fr', gap: '2px' }}>
+            <div style={{ marginBottom: '3px', display: 'grid', gridTemplateColumns: '0.5fr 2fr 1.2fr 1fr 1.5fr 1.8fr', gap: '8px' }}>
               <div>No.</div>
               <div>Date (Day)</div>
               <div style={{ textAlign: 'right' }}>Weight</div>
-              <div style={{ textAlign: 'center' }}>Rate</div>
+              <div style={{ textAlign: 'right' }}>Rate</div>
               <div style={{ textAlign: 'right' }}>Amount</div>
               <div>Created By</div>
             </div>
@@ -288,11 +426,11 @@ JAI HIND POULTRY
               const weekday = getWeekday(sale.date);
               const createdBy = sale.created_by_username ? `${sale.created_by_username} (${sale.created_by_role})` : 'Admin';
               return (
-                <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 2.5fr 1.5fr 1.2fr 1.8fr 2fr', gap: '2px', marginBottom: '2px' }}>
+                <div key={idx} style={{ display: 'grid', gridTemplateColumns: '0.5fr 2fr 1.2fr 1fr 1.5fr 1.8fr', gap: '8px', marginBottom: '2px' }}>
                   <div>{idx + 1}</div>
                   <div>{sale.date} ({weekday})</div>
                   <div style={{ textAlign: 'right' }}>{formatQuantity(sale.weight)}kg</div>
-                  <div style={{ textAlign: 'center' }}>₹{(Math.round(sale.rate * 100) / 100).toFixed(2)}</div>
+                  <div style={{ textAlign: 'right' }}>₹{(Math.round(sale.rate * 100) / 100).toFixed(2)}</div>
                   <div style={{ textAlign: 'right' }}>{formatCurrency(sale.amount)}</div>
                   <div style={{ fontSize: '8px' }}>{createdBy}</div>
                 </div>
