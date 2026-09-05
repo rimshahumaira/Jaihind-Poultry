@@ -113,10 +113,10 @@ function Users({ user, onLogout }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#f5f5f5', paddingBottom: '80px' }}>
+    <>
       <StatusBar user={user} onLogout={onLogout} />
 
-      <div style={{ flex: 1, padding: '20px' }}>
+      <div className="main-content container">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h1 style={{ margin: 0 }}>👥 User Management</h1>
           <button
@@ -328,8 +328,8 @@ function Users({ user, onLogout }) {
         )}
       </div>
 
-      <Navigation active="users" />
-    </div>
+      <Navigation user={user} active="users" />
+    </>
   );
 }
 

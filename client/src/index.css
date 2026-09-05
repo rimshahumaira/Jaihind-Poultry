@@ -379,10 +379,11 @@ tr:hover {
   background: white;
   border-top: 1px solid var(--border);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
   gap: 0;
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom);
+  max-width: 100%;
 }
 
 .nav-item {
@@ -390,16 +391,26 @@ tr:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 0;
+  padding: 6px 4px;
   color: var(--text-light);
   text-decoration: none;
-  font-size: 12px;
+  font-size: 10px;
   cursor: pointer;
   border: none;
   background: none;
-  gap: 4px;
+  gap: 2px;
   border-top: 3px solid transparent;
   transition: all 0.3s ease;
+  min-height: 60px;
+  word-break: break-word;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.nav-item-label {
+  max-width: 100%;
+  text-align: center;
+  word-break: break-word;
 }
 
 .nav-item:active,
@@ -410,12 +421,14 @@ tr:hover {
 }
 
 .nav-item-icon {
-  font-size: 24px;
+  font-size: 20px;
+  flex-shrink: 0;
 }
 
 .main-content {
-  padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  padding-bottom: calc(75px + env(safe-area-inset-bottom));
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Status Bar */

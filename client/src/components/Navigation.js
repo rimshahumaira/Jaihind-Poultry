@@ -4,27 +4,21 @@ import { useNavigate } from 'react-router-dom';
 function Navigation({ active, user }) {
   const navigate = useNavigate();
 
-  let navItems = [
+  // Fixed 8-item navigation for all users
+  // For ADMIN: All 8 items
+  // For SALES_USER: Only accessible items (Dashboard, Sales, Customers)
+  const allNavItems = [
     { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '/', roles: ['ADMIN', 'SALES_USER'] },
     { id: 'sales', icon: '💰', label: 'Sales', path: '/sales', roles: ['ADMIN', 'SALES_USER'] },
-    { id: 'customers', icon: '👥', label: 'Customers', path: '/customers', roles: ['ADMIN', 'SALES_USER'] }
+    { id: 'customers', icon: '👥', label: 'Customers', path: '/customers', roles: ['ADMIN', 'SALES_USER'] },
+    { id: 'purchase', icon: '📦', label: 'Purchase', path: '/purchase', roles: ['ADMIN'] },
+    { id: 'reports', icon: '📋', label: 'Reports', path: '/reports', roles: ['ADMIN'] },
+    { id: 'expenses', icon: '💸', label: 'Expenses', path: '/expenses', roles: ['ADMIN'] },
+    { id: 'stock', icon: '📈', label: 'Stock', path: '/stock', roles: ['ADMIN'] },
+    { id: 'settings', icon: '⚙️', label: 'Settings', path: '/settings', roles: ['ADMIN', 'SALES_USER'] }
   ];
 
-  if (user?.role === 'ADMIN') {
-    navItems = [
-      ...navItems,
-      { id: 'purchase', icon: '📦', label: 'Purchase', path: '/purchase', roles: ['ADMIN'] },
-      { id: 'stock', icon: '📈', label: 'Stock', path: '/stock', roles: ['ADMIN'] },
-      { id: 'reports', icon: '📋', label: 'Reports', path: '/reports', roles: ['ADMIN'] },
-      { id: 'expenses', icon: '💸', label: 'Expenses', path: '/expenses', roles: ['ADMIN'] },
-      { id: 'users', icon: '🔐', label: 'Users', path: '/users', roles: ['ADMIN'] },
-      { id: 'business', icon: '🏢', label: 'Business', path: '/business', roles: ['ADMIN'] },
-      { id: 'data-protection', icon: '🛡️', label: 'Backups', path: '/data-protection', roles: ['ADMIN'] },
-      { id: 'settings', icon: '⚙️', label: 'Settings', path: '/settings', roles: ['ADMIN'] }
-    ];
-  }
-
-  const filteredItems = navItems.filter(item => !item.roles || item.roles.includes(user?.role));
+  const filteredItems = allNavItems.filter(item => !item.roles || item.roles.includes(user?.role));
 
   return (
     <div className="mobile-nav">
@@ -33,10 +27,10 @@ function Navigation({ active, user }) {
           key={item.id}
           className={`nav-item ${active === item.id ? 'active' : ''}`}
           onClick={() => navigate(item.path)}
-          style={{ cursor: 'pointer' }}
+          title={item.label}
         >
           <div className="nav-item-icon">{item.icon}</div>
-          <div>{item.label}</div>
+          <div className="nav-item-label">{item.label}</div>
         </button>
       ))}
     </div>

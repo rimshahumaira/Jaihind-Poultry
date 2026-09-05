@@ -84,10 +84,10 @@ function BusinessDetails({ user, onLogout }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#f5f5f5', paddingBottom: '80px' }}>
+    <>
       <StatusBar user={user} onLogout={onLogout} />
 
-      <div style={{ flex: 1, padding: '20px' }}>
+      <div className="main-content container">
         <h1 style={{ marginTop: 0 }}>🏢 Business Details</h1>
 
         {error && (
@@ -272,8 +272,8 @@ function BusinessDetails({ user, onLogout }) {
         </div>
       </div>
 
-      <Navigation user={user} active="business" />
-    </div>
+      <Navigation user={user} active="settings" />
+    </>
   );
 }
 

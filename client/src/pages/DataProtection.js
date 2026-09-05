@@ -260,7 +260,7 @@ function DataProtection({ user, onLogout }) {
         </div>
       </div>
 
-      <Navigation user={user} active="data-protection" />
+      <Navigation user={user} active="settings" />
     </>
   );
 }
