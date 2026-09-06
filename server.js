@@ -54,12 +54,29 @@ dataProtection.cleanupOldBackups(10);
 console.log('Available Backups:', dataProtection.listBackups().length);
 console.log('==============================\n');
 
-// Initialize database
-db.initialize().then(() => {
-  console.log('Database initialized successfully');
-}).catch(err => {
-  console.error('Failed to initialize database:', err);
-});
+// Run safe migrations first, then initialize database, then start server
+async function startServer() {
+  try {
+    console.log('[Startup] Running schema migrations...');
+    await db.runSafeMigrations();
+    console.log('[Startup] Migrations completed\n');
+
+    console.log('[Startup] Initializing database...');
+    await db.initialize();
+    console.log('[Startup] Database initialized successfully\n');
+
+    // Now start listening for requests
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('[Startup] FATAL ERROR:', err);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -81,11 +98,6 @@ app.use(express.static(path.join(__dirname, 'client/build')));
 // Catch-all handler for SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
 });
 
 process.on('SIGINT', () => {

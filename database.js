@@ -50,6 +50,59 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 const dbAsync = {
+  // Safe migration to add missing columns
+  runSafeMigrations: async () => {
+    return new Promise((resolve, reject) => {
+      let completed = 0;
+      let migrationCount = 0;
+
+      // Check sales table and add missing columns
+      db.all(`PRAGMA table_info(sales)`, (err, columns) => {
+        if (err) {
+          console.error('[Migration] Error reading schema:', err.message);
+          return resolve(); // Don't fail startup on schema read error
+        }
+
+        if (!columns || columns.length === 0) {
+          return resolve(); // Table doesn't exist yet, will be created in initialize()
+        }
+
+        const columnNames = columns.map(c => c.name);
+        console.log('[Migration] Checking sales table schema...');
+
+        const columnsToAdd = [
+          { name: 'created_by_user_id', type: 'TEXT' },
+          { name: 'created_by_username', type: 'TEXT' },
+          { name: 'created_by_role', type: 'TEXT' }
+        ];
+
+        const missingColumns = columnsToAdd.filter(col => !columnNames.includes(col.name));
+
+        if (missingColumns.length === 0) {
+          console.log('[Migration] All required columns present');
+          return resolve();
+        }
+
+        migrationCount = missingColumns.length;
+
+        missingColumns.forEach(col => {
+          db.run(`ALTER TABLE sales ADD COLUMN ${col.name} ${col.type}`, (err) => {
+            if (err && !err.message.includes('duplicate')) {
+              console.error(`[Migration] Warning adding ${col.name}:`, err.message);
+            } else {
+              console.log(`[Migration] ✓ Added ${col.name} column`);
+            }
+            completed++;
+            if (completed >= migrationCount) {
+              console.log('[Migration] Schema migrations completed');
+              resolve();
+            }
+          });
+        });
+      });
+    });
+  },
+
   initialize: async () => {
     return new Promise((resolve, reject) => {
       db.serialize(() => {
