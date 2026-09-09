@@ -142,4 +142,67 @@ router.post('/:id/pay', async (req, res) => {
   }
 });
 
+router.put('/:id/pay/:paymentId', requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const { amount, payment_date, notes, payment_mode } = req.body;
+    const customerId = req.params.id;
+    const paymentId = req.params.paymentId;
+
+    // Get old payment to calculate difference
+    const oldPayment = await db.get('SELECT * FROM payments WHERE id = ? AND customer_id = ?', [paymentId, customerId]);
+    if (!oldPayment) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+
+    const amountDifference = parseFloat(amount) - oldPayment.amount;
+
+    // Update payment record
+    await db.run(
+      `UPDATE payments SET amount = ?, date = ?, notes = ?, payment_mode = ? WHERE id = ?`,
+      [amount, payment_date, notes || null, payment_mode || 'Cash', paymentId]
+    );
+
+    // Update customer outstanding amount based on difference
+    const customer = await db.get('SELECT * FROM customers WHERE id = ?', [customerId]);
+    const newOutstanding = Math.max(0, customer.outstanding_amount + amountDifference);
+    await db.run(
+      'UPDATE customers SET outstanding_amount = ? WHERE id = ?',
+      [newOutstanding, customerId]
+    );
+
+    const updatedPayment = await db.get('SELECT * FROM payments WHERE id = ?', [paymentId]);
+    res.json(updatedPayment);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.delete('/:id/pay/:paymentId', requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const customerId = req.params.id;
+    const paymentId = req.params.paymentId;
+
+    // Get payment to get its amount
+    const payment = await db.get('SELECT * FROM payments WHERE id = ? AND customer_id = ?', [paymentId, customerId]);
+    if (!payment) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+
+    // Delete payment record
+    await db.run('DELETE FROM payments WHERE id = ?', [paymentId]);
+
+    // Update customer outstanding amount (add back the payment amount)
+    const customer = await db.get('SELECT * FROM customers WHERE id = ?', [customerId]);
+    const newOutstanding = customer.outstanding_amount + payment.amount;
+    await db.run(
+      'UPDATE customers SET outstanding_amount = ? WHERE id = ?',
+      [newOutstanding, customerId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

@@ -20,10 +20,14 @@ function Collections({ user, onLogout }) {
   const [formData, setFormData] = useState({
     amount: '',
     payment_date: new Date().toISOString().split('T')[0],
-    notes: ''
+    notes: '',
+    payment_mode: 'Cash'
   });
 
   const [receivedPayments, setReceivedPayments] = useState([]);
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
   useEffect(() => {
     loadBusinessDetails();
@@ -55,9 +59,11 @@ function Collections({ user, onLogout }) {
 
   const handleCustomerSelect = async (customerId) => {
     setSelectedCustomerId(customerId);
-    setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '' });
+    setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '', payment_mode: 'Cash' });
     setSuccess('');
     setError('');
+    setEditingPayment(null);
+    setShowDeleteConfirm(null);
 
     try {
       setLoading(true);
@@ -97,7 +103,8 @@ function Collections({ user, onLogout }) {
       await API.post(`/customer/${selectedCustomerId}/pay`, {
         amount,
         payment_date: formData.payment_date,
-        notes: formData.notes
+        notes: formData.notes,
+        payment_mode: formData.payment_mode
       });
 
       setSuccess(`Payment of ₹${(Math.round(amount * 100) / 100).toFixed(2)} recorded successfully`);
@@ -105,16 +112,68 @@ function Collections({ user, onLogout }) {
       const newPayment = {
         date: formData.payment_date,
         amount,
-        notes: formData.notes
+        notes: formData.notes,
+        payment_mode: formData.payment_mode
       };
       setReceivedPayments([newPayment, ...receivedPayments]);
       setLastPayment(newPayment);
 
-      setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '' });
+      setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '', payment_mode: 'Cash' });
 
       await handleCustomerSelect(selectedCustomerId);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to record payment');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleEditPayment = (payment) => {
+    setEditingPayment(payment);
+    setEditFormData({
+      amount: payment.amount,
+      payment_date: payment.date,
+      notes: payment.notes,
+      payment_mode: payment.payment_mode || 'Cash'
+    });
+    setError('');
+  };
+
+  const handleSaveEditPayment = async () => {
+    if (!editFormData.amount || parseFloat(editFormData.amount) <= 0) {
+      setError('Please enter a valid payment amount');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      await API.put(`/customer/${selectedCustomerId}/pay/${editingPayment.id}`, {
+        amount: parseFloat(editFormData.amount),
+        payment_date: editFormData.payment_date,
+        notes: editFormData.notes,
+        payment_mode: editFormData.payment_mode
+      });
+
+      setSuccess('Payment updated successfully');
+      setEditingPayment(null);
+      await handleCustomerSelect(selectedCustomerId);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update payment');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId) => {
+    try {
+      setProcessing(true);
+      await API.delete(`/customer/${selectedCustomerId}/pay/${paymentId}`);
+
+      setSuccess('Payment deleted successfully');
+      setShowDeleteConfirm(null);
+      await handleCustomerSelect(selectedCustomerId);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete payment');
     } finally {
       setProcessing(false);
     }
@@ -331,8 +390,10 @@ function Collections({ user, onLogout }) {
                 setSelectedCustomerId('');
                 setLedger(null);
                 setSelectedCustomer(null);
-                setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '' });
+                setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '', payment_mode: 'Cash' });
                 setReceivedPayments([]);
+                setEditingPayment(null);
+                setShowDeleteConfirm(null);
               }}
               style={{
                 background: 'none',
@@ -427,12 +488,27 @@ function Collections({ user, onLogout }) {
                 )}
 
                 <div className="input-group">
-                  <label>Notes (optional)</label>
+                  <label>Payment Mode *</label>
+                  <select
+                    value={formData.payment_mode}
+                    onChange={(e) => setFormData({ ...formData, payment_mode: e.target.value })}
+                    required
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div className="input-group">
+                  <label>Reference/Notes (optional)</label>
                   <input
                     type="text"
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="e.g., Cash, Check, Online transfer"
+                    placeholder="e.g., Reference number, transaction ID, check number"
                   />
                 </div>
 
@@ -448,7 +524,7 @@ function Collections({ user, onLogout }) {
                     type="button"
                     className="btn"
                     onClick={() => {
-                      setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '' });
+                      setFormData({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '', payment_mode: 'Cash' });
                     }}
                     style={{ background: '#bdc3c7', color: 'white' }}
                   >
@@ -458,28 +534,168 @@ function Collections({ user, onLogout }) {
               </form>
             </div>
 
-            {/* Today's Received Payments */}
-            {receivedPayments.length > 0 && (
+            {/* Payment History */}
+            {ledger && ledger.payments && ledger.payments.length > 0 && (
               <div className="card mb-3">
-                <div className="card-header">Payments Received Today</div>
-                {receivedPayments.map((payment, idx) => (
+                <div className="card-header">Payment History</div>
+                {editingPayment && (
+                  <div style={{ backgroundColor: '#e8f4f8', padding: '16px', marginBottom: '12px', borderRadius: '6px' }}>
+                    <div style={{ marginBottom: '12px', fontWeight: '600' }}>Edit Payment</div>
+                    <div className="input-group" style={{ marginBottom: '12px' }}>
+                      <label>Amount (₹) *</label>
+                      <input
+                        type="number"
+                        value={editFormData.amount}
+                        onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
+                        placeholder="0.00"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                    <div className="input-group" style={{ marginBottom: '12px' }}>
+                      <label>Payment Date *</label>
+                      <input
+                        type="date"
+                        value={editFormData.payment_date}
+                        onChange={(e) => setEditFormData({ ...editFormData, payment_date: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="input-group" style={{ marginBottom: '12px' }}>
+                      <label>Payment Mode *</label>
+                      <select
+                        value={editFormData.payment_mode}
+                        onChange={(e) => setEditFormData({ ...editFormData, payment_mode: e.target.value })}
+                        required
+                      >
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Cheque">Cheque</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div className="input-group" style={{ marginBottom: '12px' }}>
+                      <label>Reference/Notes (optional)</label>
+                      <input
+                        type="text"
+                        value={editFormData.notes}
+                        onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                        placeholder="e.g., Reference number, transaction ID"
+                      />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <button
+                        onClick={handleSaveEditPayment}
+                        className="btn btn-success"
+                        disabled={processing}
+                      >
+                        {processing ? 'Saving...' : '✓ Save Changes'}
+                      </button>
+                      <button
+                        onClick={() => setEditingPayment(null)}
+                        className="btn"
+                        style={{ background: '#bdc3c7', color: 'white' }}
+                        disabled={processing}
+                      >
+                        ✕ Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {showDeleteConfirm && (
+                  <div style={{ backgroundColor: '#ffe8e8', padding: '16px', marginBottom: '12px', borderRadius: '6px', borderLeft: '4px solid #e74c3c' }}>
+                    <div style={{ marginBottom: '12px', fontWeight: '600', color: '#c0392b' }}>Confirm Delete Payment</div>
+                    <div style={{ fontSize: '14px', marginBottom: '12px', color: '#555' }}>
+                      <div>Customer: <strong>{selectedCustomer?.name}</strong></div>
+                      <div>Amount: <strong>{formatCurrency(showDeleteConfirm.amount)}</strong></div>
+                      <div>Date: <strong>{showDeleteConfirm.date}</strong></div>
+                      <div>Mode: <strong>{showDeleteConfirm.payment_mode || 'Cash'}</strong></div>
+                    </div>
+                    <div style={{ color: '#c0392b', fontSize: '12px', marginBottom: '12px' }}>
+                      ⚠️ This will add the amount back to the customer's outstanding balance.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <button
+                        onClick={() => handleDeletePayment(showDeleteConfirm.id)}
+                        className="btn"
+                        style={{ background: '#e74c3c', color: 'white' }}
+                        disabled={processing}
+                      >
+                        {processing ? 'Deleting...' : '🗑️ Yes, Delete'}
+                      </button>
+                      <button
+                        onClick={() => setShowDeleteConfirm(null)}
+                        className="btn"
+                        style={{ background: '#bdc3c7', color: 'white' }}
+                        disabled={processing}
+                      >
+                        ✕ Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {[...ledger.payments].reverse().map((payment) => (
                   <div
-                    key={idx}
+                    key={payment.id}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
+                      alignItems: 'start',
                       paddingBottom: '12px',
                       marginBottom: '12px',
-                      borderBottom: idx < receivedPayments.length - 1 ? '1px solid #eee' : 'none'
+                      borderBottom: '1px solid #eee'
                     }}
                   >
-                    <div>
-                      <div style={{ fontWeight: '600' }}>{formatCurrency(payment.amount)}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '600', marginBottom: '4px' }}>{formatCurrency(payment.amount)}</div>
+                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                        📅 {payment.date} · 📦 {payment.payment_mode || 'Cash'}
+                      </div>
                       {payment.notes && (
-                        <div style={{ fontSize: '12px', color: '#666' }}>{payment.notes}</div>
+                        <div style={{ fontSize: '12px', color: '#999' }}>Reference: {payment.notes}</div>
                       )}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#999' }}>{payment.date}</div>
+                    {user?.role === 'ADMIN' && (
+                      <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
+                        <button
+                          onClick={() => handleEditPayment(payment)}
+                          style={{
+                            background: '#3498db',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '6px 10px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            transition: 'background 0.2s'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.background = '#2980b9'}
+                          onMouseOut={(e) => e.currentTarget.style.background = '#3498db'}
+                          disabled={processing}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => setShowDeleteConfirm(payment)}
+                          style={{
+                            background: '#e74c3c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '6px 10px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            transition: 'background 0.2s'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.background = '#c0392b'}
+                          onMouseOut={(e) => e.currentTarget.style.background = '#e74c3c'}
+                          disabled={processing}
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
