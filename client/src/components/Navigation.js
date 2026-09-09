@@ -4,18 +4,18 @@ import { useNavigate } from 'react-router-dom';
 function Navigation({ active, user }) {
   const navigate = useNavigate();
 
-  // Fixed 8-item navigation for all users
-  // For ADMIN: All 8 items
-  // For SALES_USER: Only accessible items (Dashboard, Sales, Customers)
+  // Role-based navigation menu
+  // ADMIN: All 8 items
+  // SALES_USER: Only Sales and Customers
   const allNavItems = [
-    { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '/', roles: ['ADMIN', 'SALES_USER'] },
+    { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '/', roles: ['ADMIN'] },
     { id: 'sales', icon: '💰', label: 'Sales', path: '/sales', roles: ['ADMIN', 'SALES_USER'] },
     { id: 'customers', icon: '👥', label: 'Customers', path: '/customers', roles: ['ADMIN', 'SALES_USER'] },
     { id: 'purchase', icon: '📦', label: 'Purchase', path: '/purchase', roles: ['ADMIN'] },
     { id: 'reports', icon: '📋', label: 'Reports', path: '/reports', roles: ['ADMIN'] },
     { id: 'expenses', icon: '💸', label: 'Expenses', path: '/expenses', roles: ['ADMIN'] },
     { id: 'stock', icon: '📈', label: 'Stock', path: '/stock', roles: ['ADMIN'] },
-    { id: 'settings', icon: '⚙️', label: 'Settings', path: '/settings', roles: ['ADMIN', 'SALES_USER'] }
+    { id: 'settings', icon: '⚙️', label: 'Settings', path: '/settings', roles: ['ADMIN'] }
   ];
 
   const filteredItems = allNavItems.filter(item => !item.roles || item.roles.includes(user?.role));

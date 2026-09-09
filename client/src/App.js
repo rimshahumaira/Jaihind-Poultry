@@ -108,6 +108,14 @@ function App() {
     return children;
   };
 
+  const HomepageRoute = () => {
+    if (!user) return <Navigate to="/" />;
+    if (user.role === 'SALES_USER') {
+      return <Navigate to="/sales" />;
+    }
+    return <Dashboard user={user} onLogout={handleLogout} />;
+  };
+
   return (
     <Router>
       {!user ? (
@@ -118,7 +126,7 @@ function App() {
         )
       ) : (
         <Routes>
-          <Route path="/" element={<Dashboard user={user} onLogout={handleLogout} />} />
+          <Route path="/" element={<HomepageRoute />} />
           <Route path="/sales" element={<ProtectedRoute roles={['ADMIN', 'SALES_USER']}><Sales user={user} onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/purchase" element={<ProtectedRoute roles={['ADMIN']}><Purchase user={user} onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/stock" element={<ProtectedRoute roles={['ADMIN']}><Stock user={user} onLogout={handleLogout} /></ProtectedRoute>} />
