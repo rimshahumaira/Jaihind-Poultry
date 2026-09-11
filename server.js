@@ -17,6 +17,7 @@ const inventoryRoutes = require('./routes/inventory');
 const reportRoutes = require('./routes/report');
 const backupRoutes = require('./routes/backup');
 const businessRoutes = require('./routes/business');
+const godownRoutes = require('./routes/godown');
 const { verifyToken } = require('./middleware/auth');
 
 const app = express();
@@ -91,6 +92,7 @@ app.use('/api/inventory', verifyToken, inventoryRoutes);
 app.use('/api/report', verifyToken, reportRoutes);
 app.use('/api/backup', verifyToken, backupRoutes);
 app.use('/api/business', businessRoutes);
+app.use('/api/godown', verifyToken, godownRoutes);
 
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, 'client/build')));

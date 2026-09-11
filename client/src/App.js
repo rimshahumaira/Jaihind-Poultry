@@ -19,6 +19,15 @@ import Settings from './pages/Settings';
 import BusinessDetails from './pages/BusinessDetails';
 import DataProtection from './pages/DataProtection';
 import AccessDenied from './pages/AccessDenied';
+import GodownDashboard from './pages/GodownDashboard';
+import GodownSales from './pages/GodownSales';
+import GodownPurchases from './pages/GodownPurchases';
+import GodownCustomers from './pages/GodownCustomers';
+import GodownStock from './pages/GodownStock';
+import GodownExpenses from './pages/GodownExpenses';
+import GodownPayments from './pages/GodownPayments';
+import GodownCustomerLedger from './pages/GodownCustomerLedger';
+import GodownReports from './pages/GodownReports';
 
 const API = axios.create({
   baseURL: '/api'
@@ -113,6 +122,9 @@ function App() {
     if (user.role === 'SALES_USER') {
       return <Navigate to="/sales" />;
     }
+    if (user.role === 'GODOWN_MANAGER') {
+      return <Navigate to="/godown" />;
+    }
     return <Dashboard user={user} onLogout={handleLogout} />;
   };
 
@@ -141,6 +153,18 @@ function App() {
           <Route path="/data-protection" element={<ProtectedRoute roles={['ADMIN']}><DataProtection user={user} onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute roles={['ADMIN']}><Settings user={user} onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/access-denied" element={<AccessDenied user={user} onLogout={handleLogout} />} />
+
+          {/* Godown Routes */}
+          <Route path="/godown" element={<ProtectedRoute roles={['GODOWN_MANAGER']}><GodownDashboard user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/godown/sales" element={<ProtectedRoute roles={['GODOWN_MANAGER']}><GodownSales user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/godown/purchases" element={<ProtectedRoute roles={['GODOWN_MANAGER']}><GodownPurchases user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/godown/customers" element={<ProtectedRoute roles={['GODOWN_MANAGER']}><GodownCustomers user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/godown/stock" element={<ProtectedRoute roles={['GODOWN_MANAGER']}><GodownStock user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/godown/expenses" element={<ProtectedRoute roles={['GODOWN_MANAGER']}><GodownExpenses user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/godown/payments" element={<ProtectedRoute roles={['GODOWN_MANAGER']}><GodownPayments user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/godown/customer/:id/ledger" element={<ProtectedRoute roles={['GODOWN_MANAGER']}><GodownCustomerLedger user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/godown/reports" element={<ProtectedRoute roles={['GODOWN_MANAGER']}><GodownReports user={user} onLogout={handleLogout} /></ProtectedRoute>} />
+
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       )}

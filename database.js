@@ -445,6 +445,162 @@ const dbAsync = {
           if (err) reject(err);
         });
 
+        // GODOWN MANAGER TABLES
+        // Godown Customers table
+        db.run(`
+          CREATE TABLE IF NOT EXISTS godown_customers (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            phone TEXT,
+            address TEXT,
+            contact_person TEXT,
+            customer_type TEXT DEFAULT 'RETAIL',
+            default_sale_rate REAL DEFAULT 0,
+            total_quantity REAL DEFAULT 0,
+            total_amount REAL DEFAULT 0,
+            outstanding_amount REAL DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `, (err) => {
+          if (err && !err.message.includes('already exists')) console.log('Created godown_customers table');
+        });
+
+        // Godown Sales table
+        db.run(`
+          CREATE TABLE IF NOT EXISTS godown_sales (
+            id TEXT PRIMARY KEY,
+            bill_number TEXT UNIQUE NOT NULL,
+            date DATE NOT NULL,
+            customer_id TEXT NOT NULL,
+            customer_name TEXT NOT NULL,
+            sale_type TEXT NOT NULL,
+            live_bird_weight REAL,
+            live_bird_rate REAL,
+            meat_output_weight REAL,
+            meat_output_rate REAL,
+            meat_yield_percent REAL,
+            item_name TEXT,
+            quantity REAL,
+            unit TEXT,
+            rate REAL,
+            total_amount REAL NOT NULL,
+            payment_status TEXT DEFAULT 'Pending',
+            payment_mode TEXT DEFAULT 'Cash',
+            amount_paid REAL DEFAULT 0,
+            balance_due REAL DEFAULT 0,
+            notes TEXT,
+            created_by_user_id TEXT,
+            created_by_username TEXT,
+            created_by_role TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (customer_id) REFERENCES godown_customers(id)
+          )
+        `, (err) => {
+          if (err && !err.message.includes('already exists')) console.log('Created godown_sales table');
+        });
+
+        // Godown Purchases table
+        db.run(`
+          CREATE TABLE IF NOT EXISTS godown_purchases (
+            id TEXT PRIMARY KEY,
+            date DATE NOT NULL,
+            purchase_type TEXT NOT NULL,
+            main_business_sale_id TEXT,
+            supplier_id TEXT,
+            supplier_name TEXT,
+            bird_type TEXT,
+            weight REAL NOT NULL,
+            bird_count INTEGER DEFAULT 0,
+            rate REAL NOT NULL,
+            amount REAL NOT NULL,
+            payment_mode TEXT DEFAULT 'Cash',
+            amount_paid REAL DEFAULT 0,
+            outstanding_amount REAL DEFAULT 0,
+            notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `, (err) => {
+          if (err && !err.message.includes('already exists')) console.log('Created godown_purchases table');
+        });
+
+        // Godown Stock table
+        db.run(`
+          CREATE TABLE IF NOT EXISTS godown_stock (
+            id TEXT PRIMARY KEY,
+            date DATE NOT NULL UNIQUE,
+            live_bird_opening REAL DEFAULT 0,
+            live_bird_purchased REAL DEFAULT 0,
+            live_bird_processed REAL DEFAULT 0,
+            live_bird_sold REAL DEFAULT 0,
+            live_bird_closing REAL DEFAULT 0,
+            meat_opening REAL DEFAULT 0,
+            meat_produced REAL DEFAULT 0,
+            meat_sold REAL DEFAULT 0,
+            meat_closing REAL DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `, (err) => {
+          if (err && !err.message.includes('already exists')) console.log('Created godown_stock table');
+        });
+
+        // Godown Expenses table
+        db.run(`
+          CREATE TABLE IF NOT EXISTS godown_expenses (
+            id TEXT PRIMARY KEY,
+            date DATE NOT NULL,
+            category TEXT NOT NULL,
+            amount REAL NOT NULL,
+            description TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `, (err) => {
+          if (err && !err.message.includes('already exists')) console.log('Created godown_expenses table');
+        });
+
+        // Godown Payments table
+        db.run(`
+          CREATE TABLE IF NOT EXISTS godown_payments (
+            id TEXT PRIMARY KEY,
+            payment_type TEXT NOT NULL,
+            sale_id TEXT,
+            customer_id TEXT,
+            purchase_id TEXT,
+            supplier_id TEXT,
+            amount REAL NOT NULL,
+            date DATE NOT NULL,
+            payment_mode TEXT DEFAULT 'Cash',
+            notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (sale_id) REFERENCES godown_sales(id),
+            FOREIGN KEY (customer_id) REFERENCES godown_customers(id),
+            FOREIGN KEY (purchase_id) REFERENCES godown_purchases(id)
+          )
+        `, (err) => {
+          if (err && !err.message.includes('already exists')) console.log('Created godown_payments table');
+        });
+
+        // Create indexes for Godown tables
+        db.run(`CREATE INDEX IF NOT EXISTS idx_godown_sales_date ON godown_sales(date)`, (err) => {
+          if (err) console.log('Index godown_sales_date creation note:', err?.message);
+        });
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_godown_sales_customer ON godown_sales(customer_id)`, (err) => {
+          if (err) console.log('Index godown_sales_customer creation note:', err?.message);
+        });
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_godown_purchases_date ON godown_purchases(date)`, (err) => {
+          if (err) console.log('Index godown_purchases_date creation note:', err?.message);
+        });
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_godown_expenses_date ON godown_expenses(date)`, (err) => {
+          if (err) console.log('Index godown_expenses_date creation note:', err?.message);
+        });
+
         setTimeout(resolve, 500);
       });
     });

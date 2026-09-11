@@ -50,7 +50,7 @@ router.post('/', verifyToken, requireRole(['ADMIN']), async (req, res) => {
       return res.status(400).json({ error: 'Username, name, and password are required' });
     }
 
-    if (!['ADMIN', 'SALES_USER'].includes(role)) {
+    if (!['ADMIN', 'SALES_USER', 'GODOWN_MANAGER'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
 
@@ -63,10 +63,13 @@ router.post('/', verifyToken, requireRole(['ADMIN']), async (req, res) => {
     const userId = uuidv4();
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // GODOWN_MANAGER users get business_id='godown', others inherit from creator
+    const businessId = role === 'GODOWN_MANAGER' ? 'godown' : req.user.business_id;
+
     await db.run(
       `INSERT INTO users (id, business_id, username, name, password, role, active)
        VALUES (?, ?, ?, ?, ?, ?, 1)`,
-      [userId, req.user.business_id, username, name, hashedPassword, role]
+      [userId, businessId, username, name, hashedPassword, role]
     );
 
     const newUser = await db.get(
