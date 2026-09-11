@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
+import StatusBar from '../components/StatusBar';
 import { API } from '../App';
 
 function GodownDashboard({ user, onLogout }) {
@@ -42,112 +43,118 @@ function GodownDashboard({ user, onLogout }) {
 
   if (loading) {
     return (
-      <div className="dashboard-container">
-        <div className="spinner"></div>
-        <p>Loading...</p>
-      </div>
+      <>
+        <StatusBar user={user} onLogout={onLogout} />
+        <div className="main-content container">
+          <div className="loading">
+            <div className="spinner"></div>
+          </div>
+        </div>
+        <Navigation active="godown-dashboard" user={user} />
+      </>
     );
   }
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>🏢 Godown Dashboard</h1>
-        <button className="logout-btn" onClick={() => { localStorage.removeItem('token'); onLogout(); navigate('/'); }}>
-          Logout
-        </button>
-      </div>
+    <>
+      <StatusBar user={user} onLogout={onLogout} />
+      <div className="main-content container">
+        {error && <div className="alert alert-error mb-3">{error}</div>}
 
-      {error && <div className="error-message">{error}</div>}
-
-      <div className="date-filter">
-        <label>
-          From:
-          <input type="date" name="fromDate" value={dateRange.fromDate} onChange={handleDateChange} />
-        </label>
-        <label>
-          To:
-          <input type="date" name="toDate" value={dateRange.toDate} onChange={handleDateChange} />
-        </label>
-      </div>
-
-      {dashboardData && (
-        <div className="dashboard-grid">
-          <div className="dashboard-card sales-card">
-            <h3>Total Sales</h3>
-            <p className="amount">₹{dashboardData.totalSales?.toFixed(2) || '0.00'}</p>
-          </div>
-
-          <div className="dashboard-card purchases-card">
-            <h3>Total Purchases</h3>
-            <p className="amount">₹{dashboardData.totalPurchases?.toFixed(2) || '0.00'}</p>
-          </div>
-
-          <div className="dashboard-card expenses-card">
-            <h3>Total Expenses</h3>
-            <p className="amount">₹{dashboardData.totalExpenses?.toFixed(2) || '0.00'}</p>
-          </div>
-
-          <div className="dashboard-card gross-profit-card">
-            <h3>Gross Profit</h3>
-            <p className="amount" style={{ color: dashboardData.grossProfit >= 0 ? '#4CAF50' : '#f44336' }}>
-              ₹{dashboardData.grossProfit?.toFixed(2) || '0.00'}
-            </p>
-          </div>
-
-          <div className="dashboard-card net-profit-card">
-            <h3>Net Profit</h3>
-            <p className="amount" style={{ color: dashboardData.netProfit >= 0 ? '#2196F3' : '#ff9800' }}>
-              ₹{dashboardData.netProfit?.toFixed(2) || '0.00'}
-            </p>
-          </div>
-
-          <div className="dashboard-card outstanding-card">
-            <h3>Outstanding Collections</h3>
-            <p className="amount">₹{dashboardData.outstandingCollections?.toFixed(2) || '0.00'}</p>
-          </div>
-
-          <div className="dashboard-card pending-card">
-            <h3>Pending Payments</h3>
-            <p className="amount">₹{dashboardData.pendingPayments?.toFixed(2) || '0.00'}</p>
-          </div>
-
-          {dashboardData.stock && (
-            <div className="dashboard-card stock-card">
-              <h3>Current Stock</h3>
-              <div className="stock-info">
-                <p>Live Bird: <strong>{dashboardData.stock.live_bird_closing?.toFixed(2) || '0'} kg</strong></p>
-                <p>Meat: <strong>{dashboardData.stock.meat_closing?.toFixed(2) || '0'} kg</strong></p>
-              </div>
-            </div>
-          )}
-
-          {dashboardData.salesByType && dashboardData.salesByType.length > 0 && (
-            <div className="dashboard-card sales-by-type-card">
-              <h3>Sales by Type</h3>
-              <div className="sales-breakdown">
-                {dashboardData.salesByType.map((saleType, idx) => (
-                  <div key={idx} className="sale-type-row">
-                    <span>{saleType.sale_type}</span>
-                    <span>₹{saleType.amount?.toFixed(2) || '0.00'}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+          <input type="date" name="fromDate" value={dateRange.fromDate} onChange={handleDateChange} style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #bdc3c7' }} />
+          <input type="date" name="toDate" value={dateRange.toDate} onChange={handleDateChange} style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #bdc3c7' }} />
         </div>
-      )}
 
-      <div className="quick-actions">
-        <button onClick={() => navigate('/godown/sales')} className="action-btn">💰 New Sale</button>
-        <button onClick={() => navigate('/godown/purchases')} className="action-btn">📦 New Purchase</button>
-        <button onClick={() => navigate('/godown/customers')} className="action-btn">👥 Customers</button>
-        <button onClick={() => navigate('/godown/payments')} className="action-btn">💳 Payments</button>
-        <button onClick={() => navigate('/godown/reports')} className="action-btn">📊 Reports</button>
+        {dashboardData && (
+          <>
+            {/* Main Metrics Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <div className="stat-box" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', borderRadius: '8px' }}>
+                <div className="stat-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>💰 Total Sales</div>
+                <div className="stat-value" style={{ color: 'white' }}>₹{dashboardData.totalSales?.toFixed(2) || '0'}</div>
+              </div>
+
+              <div className="stat-box" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white', borderRadius: '8px' }}>
+                <div className="stat-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>📦 Total Purchases</div>
+                <div className="stat-value" style={{ color: 'white' }}>₹{dashboardData.totalPurchases?.toFixed(2) || '0'}</div>
+              </div>
+
+              <div className="stat-box" style={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: 'white', borderRadius: '8px' }}>
+                <div className="stat-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>💸 Total Expenses</div>
+                <div className="stat-value" style={{ color: 'white' }}>₹{dashboardData.totalExpenses?.toFixed(2) || '0'}</div>
+              </div>
+
+              <div className="stat-box" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white', borderRadius: '8px' }}>
+                <div className="stat-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>📈 Collections Outstanding</div>
+                <div className="stat-value" style={{ color: 'white' }}>₹{dashboardData.outstandingCollections?.toFixed(2) || '0'}</div>
+              </div>
+            </div>
+
+            {/* Profit Summary */}
+            <div className="card" style={{ marginBottom: '12px' }}>
+              <div className="card-header">💹 Profit Summary</div>
+              <div className="card-body">
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px' }}>
+                  <span>Gross Profit</span>
+                  <span style={{ fontWeight: '600', color: dashboardData.grossProfit >= 0 ? '#27ae60' : '#e74c3c' }}>₹{dashboardData.grossProfit?.toFixed(2) || '0'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #3498db', paddingBottom: '10px', marginBottom: '10px' }}>
+                  <span style={{ fontWeight: '600' }}>Net Profit</span>
+                  <span style={{ fontWeight: '700', fontSize: '18px', color: dashboardData.netProfit >= 0 ? '#27ae60' : '#e74c3c' }}>₹{dashboardData.netProfit?.toFixed(2) || '0'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Stock */}
+            {dashboardData.stock && (
+              <div className="card" style={{ marginBottom: '12px' }}>
+                <div className="card-header">📊 Current Stock</div>
+                <div className="card-body">
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Live Bird</div>
+                      <div style={{ fontSize: '24px', fontWeight: '600', color: '#27ae60' }}>{dashboardData.stock.live_bird_closing?.toFixed(2) || '0'} kg</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Meat</div>
+                      <div style={{ fontSize: '24px', fontWeight: '600', color: '#2980b9' }}>{dashboardData.stock.meat_closing?.toFixed(2) || '0'} kg</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sales by Type */}
+            {dashboardData.salesByType && dashboardData.salesByType.length > 0 && (
+              <div className="card" style={{ marginBottom: '12px' }}>
+                <div className="card-header">🐔 Sales by Type</div>
+                <div className="card-body">
+                  {dashboardData.salesByType.map((saleType, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', marginBottom: '8px', borderBottom: '1px solid #eee' }}>
+                      <span>{saleType.sale_type}</span>
+                      <span style={{ fontWeight: '600' }}>₹{saleType.amount?.toFixed(2) || '0'} ({saleType.count} sale{saleType.count > 1 ? 's' : ''})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+              <button className="btn btn-success btn-block" onClick={() => navigate('/godown/sales')}>+ New Sale</button>
+              <button className="btn btn-primary btn-block" onClick={() => navigate('/godown/purchases')}>+ New Purchase</button>
+              <button className="btn btn-warning btn-block" onClick={() => navigate('/godown/customers')}>👥 Customers</button>
+              <button className="btn btn-secondary btn-block" onClick={() => navigate('/godown/stock')}>📊 Stock</button>
+              <button className="btn" style={{ background: '#e74c3c', color: 'white' }} onClick={() => navigate('/godown/payments')}>💳 Payments</button>
+              <button className="btn" style={{ background: '#8e44ad', color: 'white' }} onClick={() => navigate('/godown/reports')}>📈 Reports</button>
+            </div>
+          </>
+        )}
       </div>
 
       <Navigation active="godown-dashboard" user={user} />
-    </div>
+    </>
   );
 }
 

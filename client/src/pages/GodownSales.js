@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
+import StatusBar from '../components/StatusBar';
 import { API } from '../App';
 
 function GodownSales({ user, onLogout }) {
@@ -132,209 +133,223 @@ function GodownSales({ user, onLogout }) {
   };
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <h1>💰 Godown Sales</h1>
-        <button className="logout-btn" onClick={() => { localStorage.removeItem('token'); onLogout(); navigate('/'); }}>
-          Logout
-        </button>
-      </div>
+    <>
+      <StatusBar user={user} onLogout={onLogout} />
+      <div className="main-content container">
+        {error && <div className="alert alert-error mb-3">{error}</div>}
 
-      {error && <div className="error-message">{error}</div>}
-
-      <div className="filter-section">
-        <div className="date-filter">
-          <label>
-            From:
-            <input type="date" name="fromDate" value={dateRange.fromDate} onChange={(e) => setDateRange(prev => ({ ...prev, fromDate: e.target.value }))} />
-          </label>
-          <label>
-            To:
-            <input type="date" name="toDate" value={dateRange.toDate} onChange={(e) => setDateRange(prev => ({ ...prev, toDate: e.target.value }))} />
-          </label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h1 style={{ margin: 0 }}>💰 Godown Sales</h1>
+          <button className="btn btn-success" onClick={() => setShowForm(!showForm)}>
+            {showForm ? '✕ Cancel' : '+ Add Sale'}
+          </button>
         </div>
-        <button className="primary-btn" onClick={() => setShowForm(!showForm)}>
-          {showForm ? '✕ Cancel' : '+ Add Sale'}
-        </button>
-      </div>
 
-      {showForm && (
-        <div className="form-section">
-          <h2>Create New Sale</h2>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+          <input type="date" value={dateRange.fromDate} onChange={(e) => setDateRange(prev => ({ ...prev, fromDate: e.target.value }))} style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #bdc3c7' }} />
+          <input type="date" value={dateRange.toDate} onChange={(e) => setDateRange(prev => ({ ...prev, toDate: e.target.value }))} style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #bdc3c7' }} />
+        </div>
 
-          {/* Sale Type Selection */}
-          <div className="sale-type-selector">
-            <button
-              className={`type-btn ${formData.sale_type === 'RETAIL_LIVE_BIRD' ? 'active' : ''}`}
-              onClick={() => handleSaleTypeChange('RETAIL_LIVE_BIRD')}
-            >
-              🐔 Retail Live Bird
-            </button>
-            <button
-              className={`type-btn ${formData.sale_type === 'HALAL' ? 'active' : ''}`}
-              onClick={() => handleSaleTypeChange('HALAL')}
-            >
-              🔪 Halal
-            </button>
-            <button
-              className={`type-btn ${formData.sale_type === 'HOTEL' ? 'active' : ''}`}
-              onClick={() => handleSaleTypeChange('HOTEL')}
-            >
-              🏨 Hotel
-            </button>
-          </div>
+        {showForm && (
+          <div style={{ background: 'white', padding: '16px', borderRadius: '8px', marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            <h2 style={{ marginTop: 0 }}>Create New Sale</h2>
 
-          <form onSubmit={handleAddSale}>
-            {/* Common Fields */}
-            <div className="form-group">
-              <label>Date</label>
-              <input type="date" name="date" value={formData.date} onChange={handleInputChange} required />
+            {/* Sale Type Selection */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+              <button
+                style={{
+                  padding: '12px',
+                  borderRadius: '4px',
+                  border: formData.sale_type === 'RETAIL_LIVE_BIRD' ? '2px solid #27ae60' : '1px solid #bdc3c7',
+                  background: formData.sale_type === 'RETAIL_LIVE_BIRD' ? '#ecf0f1' : 'white',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+                onClick={() => handleSaleTypeChange('RETAIL_LIVE_BIRD')}
+              >
+                🐔 Retail Live Bird
+              </button>
+              <button
+                style={{
+                  padding: '12px',
+                  borderRadius: '4px',
+                  border: formData.sale_type === 'HALAL' ? '2px solid #27ae60' : '1px solid #bdc3c7',
+                  background: formData.sale_type === 'HALAL' ? '#ecf0f1' : 'white',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+                onClick={() => handleSaleTypeChange('HALAL')}
+              >
+                🔪 Halal
+              </button>
+              <button
+                style={{
+                  padding: '12px',
+                  borderRadius: '4px',
+                  border: formData.sale_type === 'HOTEL' ? '2px solid #27ae60' : '1px solid #bdc3c7',
+                  background: formData.sale_type === 'HOTEL' ? '#ecf0f1' : 'white',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+                onClick={() => handleSaleTypeChange('HOTEL')}
+              >
+                🏨 Hotel
+              </button>
             </div>
 
-            <div className="form-group">
-              <label>Customer</label>
-              <select name="customer_id" value={formData.customer_id} onChange={handleInputChange} required>
-                <option value="">Select customer...</option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
+            <form onSubmit={handleAddSale}>
+              {/* Common Fields */}
+              <div className="input-group">
+                <label>Date</label>
+                <input type="date" name="date" value={formData.date} onChange={handleInputChange} required />
+              </div>
 
-            <div className="form-group">
-              <label>Payment Mode</label>
-              <select name="payment_mode" value={formData.payment_mode} onChange={handleInputChange}>
-                <option value="Cash">Cash</option>
-                <option value="UPI">UPI</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Cheque">Cheque</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+              <div className="input-group">
+                <label>Customer</label>
+                <select name="customer_id" value={formData.customer_id} onChange={handleInputChange} required>
+                  <option value="">Select customer...</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
 
-            {/* RETAIL_LIVE_BIRD Fields */}
-            {formData.sale_type === 'RETAIL_LIVE_BIRD' && (
-              <>
-                <div className="form-row">
-                  <div className="form-group">
+              <div className="input-group">
+                <label>Payment Mode</label>
+                <select name="payment_mode" value={formData.payment_mode} onChange={handleInputChange}>
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Cheque">Cheque</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {/* RETAIL_LIVE_BIRD Fields */}
+              {formData.sale_type === 'RETAIL_LIVE_BIRD' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="input-group">
                     <label>Live Bird Weight (kg)</label>
                     <input type="number" name="live_bird_weight" value={formData.live_bird_weight} onChange={handleInputChange} step="0.01" required />
                   </div>
-                  <div className="form-group">
+                  <div className="input-group">
                     <label>Rate (₹/kg)</label>
                     <input type="number" name="live_bird_rate" value={formData.live_bird_rate} onChange={handleInputChange} step="0.01" required />
                   </div>
                 </div>
-              </>
-            )}
+              )}
 
-            {/* HALAL Fields */}
-            {formData.sale_type === 'HALAL' && (
-              <>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Live Bird Weight (kg)</label>
-                    <input type="number" name="live_bird_weight" value={formData.live_bird_weight} onChange={handleInputChange} step="0.01" required />
+              {/* HALAL Fields */}
+              {formData.sale_type === 'HALAL' && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="input-group">
+                      <label>Live Bird Weight (kg)</label>
+                      <input type="number" name="live_bird_weight" value={formData.live_bird_weight} onChange={handleInputChange} step="0.01" required />
+                    </div>
+                    <div className="input-group">
+                      <label>Live Bird Rate (₹/kg)</label>
+                      <input type="number" name="live_bird_rate" value={formData.live_bird_rate} onChange={handleInputChange} step="0.01" required />
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label>Live Bird Rate (₹/kg)</label>
-                    <input type="number" name="live_bird_rate" value={formData.live_bird_rate} onChange={handleInputChange} step="0.01" required />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="input-group">
+                      <label>Meat Output Weight (kg)</label>
+                      <input type="number" name="meat_output_weight" value={formData.meat_output_weight} onChange={handleInputChange} step="0.01" required />
+                    </div>
+                    <div className="input-group">
+                      <label>Meat Output Rate (₹/kg)</label>
+                      <input type="number" name="meat_output_rate" value={formData.meat_output_rate} onChange={handleInputChange} step="0.01" />
+                    </div>
                   </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Meat Output Weight (kg)</label>
-                    <input type="number" name="meat_output_weight" value={formData.meat_output_weight} onChange={handleInputChange} step="0.01" required />
-                  </div>
-                  <div className="form-group">
-                    <label>Meat Output Rate (₹/kg)</label>
-                    <input type="number" name="meat_output_rate" value={formData.meat_output_rate} onChange={handleInputChange} step="0.01" />
-                  </div>
-                </div>
-                {formData.live_bird_weight && formData.meat_output_weight && (
-                  <div className="info-box">
-                    <p>Yield: {((formData.meat_output_weight / formData.live_bird_weight) * 100).toFixed(2)}%</p>
-                  </div>
-                )}
-              </>
-            )}
+                  {formData.live_bird_weight && formData.meat_output_weight && (
+                    <div style={{ background: '#d4edda', border: '1px solid #c3e6cb', padding: '10px', borderRadius: '4px', marginBottom: '12px' }}>
+                      <strong>Yield: {((formData.meat_output_weight / formData.live_bird_weight) * 100).toFixed(2)}%</strong>
+                    </div>
+                  )}
+                </>
+              )}
 
-            {/* HOTEL Fields */}
-            {formData.sale_type === 'HOTEL' && (
-              <>
-                <div className="form-group">
-                  <label>Item Name</label>
-                  <input type="text" name="item_name" value={formData.item_name} onChange={handleInputChange} required />
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Quantity</label>
-                    <input type="number" name="quantity" value={formData.quantity} onChange={handleInputChange} step="0.01" required />
+              {/* HOTEL Fields */}
+              {formData.sale_type === 'HOTEL' && (
+                <>
+                  <div className="input-group">
+                    <label>Item Name</label>
+                    <input type="text" name="item_name" value={formData.item_name} onChange={handleInputChange} required />
                   </div>
-                  <div className="form-group">
-                    <label>Unit</label>
-                    <input type="text" name="unit" value={formData.unit} onChange={handleInputChange} placeholder="kg, piece, etc" />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <div className="input-group">
+                      <label>Quantity</label>
+                      <input type="number" name="quantity" value={formData.quantity} onChange={handleInputChange} step="0.01" required />
+                    </div>
+                    <div className="input-group">
+                      <label>Unit</label>
+                      <input type="text" name="unit" value={formData.unit} onChange={handleInputChange} placeholder="kg, piece" />
+                    </div>
+                    <div className="input-group">
+                      <label>Rate (₹)</label>
+                      <input type="number" name="rate" value={formData.rate} onChange={handleInputChange} step="0.01" required />
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label>Rate (₹)</label>
-                    <input type="number" name="rate" value={formData.rate} onChange={handleInputChange} step="0.01" required />
-                  </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
 
-            <div className="form-group">
-              <label>Notes</label>
-              <textarea name="notes" value={formData.notes} onChange={handleInputChange} rows="2"></textarea>
-            </div>
+              <div className="input-group">
+                <label>Notes</label>
+                <textarea name="notes" value={formData.notes} onChange={handleInputChange} rows="2"></textarea>
+              </div>
 
-            <button type="submit" className="primary-btn">Add Sale</button>
-          </form>
-        </div>
-      )}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button type="submit" className="btn btn-success" style={{ flex: 1 }}>Add Sale</button>
+                <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ flex: 1 }}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        )}
 
-      {loading ? (
-        <div className="loading">Loading sales...</div>
-      ) : (
-        <div className="data-section">
-          <h2>Sales List ({sales.length})</h2>
-          {sales.length === 0 ? (
-            <p>No sales recorded</p>
-          ) : (
-            <div className="table-responsive">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Bill#</th>
-                    <th>Date</th>
-                    <th>Customer</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Created By</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sales.map(sale => (
-                    <tr key={sale.id}>
-                      <td>{sale.bill_number}</td>
-                      <td>{new Date(sale.date).toLocaleDateString()}</td>
-                      <td>{sale.customer_name}</td>
-                      <td>{getSaleTypeLabel(sale.sale_type)}</td>
-                      <td>₹{sale.total_amount?.toFixed(2) || '0.00'}</td>
-                      <td>{sale.payment_status}</td>
-                      <td>{sale.created_by_username}</td>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '20px' }}>Loading sales...</div>
+        ) : (
+          <div>
+            <h2 style={{ marginTop: '20px' }}>Sales List ({sales.length})</h2>
+            {sales.length === 0 ? (
+              <p>No sales recorded</p>
+            ) : (
+              <div style={{ overflowX: 'auto', background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: '#ecf0f1', borderBottom: '2px solid #bdc3c7' }}>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Bill#</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Date</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Customer</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Type</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>Amount</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>Status</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>By</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+                  </thead>
+                  <tbody>
+                    {sales.map((sale, idx) => (
+                      <tr key={sale.id} style={{ borderBottom: '1px solid #eee', background: idx % 2 === 0 ? 'white' : '#f9f9f9' }}>
+                        <td style={{ padding: '12px' }}>{sale.bill_number}</td>
+                        <td style={{ padding: '12px' }}>{new Date(sale.date).toLocaleDateString()}</td>
+                        <td style={{ padding: '12px' }}>{sale.customer_name}</td>
+                        <td style={{ padding: '12px' }}>{getSaleTypeLabel(sale.sale_type)}</td>
+                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: '600' }}>₹{sale.total_amount?.toFixed(2) || '0'}</td>
+                        <td style={{ padding: '12px', textAlign: 'center' }}><span style={{ background: sale.payment_status === 'Paid' ? '#d4edda' : '#fff3cd', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{sale.payment_status}</span></td>
+                        <td style={{ padding: '12px' }}>{sale.created_by_username}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <Navigation active="godown-sales" user={user} />
-    </div>
+    </>
   );
 }
 

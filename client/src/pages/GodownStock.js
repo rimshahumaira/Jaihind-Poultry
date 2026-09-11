@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
+import StatusBar from '../components/StatusBar';
 import { API } from '../App';
 
 function GodownStock({ user, onLogout }) {
@@ -57,76 +58,74 @@ function GodownStock({ user, onLogout }) {
   const latestStock = stock.length > 0 ? stock[0] : null;
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <h1>📊 Godown Stock</h1>
-        <button className="logout-btn" onClick={() => { localStorage.removeItem('token'); onLogout(); navigate('/'); }}>
-          Logout
-        </button>
-      </div>
+    <>
+      <StatusBar user={user} onLogout={onLogout} />
+      <div className="main-content container">
+        {error && <div className="alert alert-error mb-3">{error}</div>}
 
-      {error && <div className="error-message">{error}</div>}
+        {latestStock && (
+          <div className="card" style={{ marginBottom: '16px' }}>
+            <div className="card-header">📊 Current Stock - {new Date(latestStock.date).toLocaleDateString()}</div>
+            <div className="card-body">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div>
+                  <h3 style={{ marginTop: 0, color: '#27ae60' }}>Live Bird</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #eee', marginBottom: '8px' }}>
+                    <span>Opening:</span>
+                    <strong>{latestStock.live_bird_opening?.toFixed(2) || '0'} kg</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #eee', marginBottom: '8px' }}>
+                    <span>Purchased:</span>
+                    <strong>{latestStock.live_bird_purchased?.toFixed(2) || '0'} kg</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #eee', marginBottom: '8px' }}>
+                    <span>Processed:</span>
+                    <strong>{latestStock.live_bird_processed?.toFixed(2) || '0'} kg</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #eee', marginBottom: '8px' }}>
+                    <span>Sold:</span>
+                    <strong>{latestStock.live_bird_sold?.toFixed(2) || '0'} kg</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '2px solid #27ae60', marginBottom: '8px', fontWeight: '600', fontSize: '16px' }}>
+                    <span>Closing:</span>
+                    <strong>{latestStock.live_bird_closing?.toFixed(2) || '0'} kg</strong>
+                  </div>
+                </div>
 
-      {latestStock && (
-        <div className="current-stock">
-          <h2>Current Stock - {new Date(latestStock.date).toLocaleDateString()}</h2>
-          <div className="stock-grid">
-            <div className="stock-item">
-              <h3>Live Bird</h3>
-              <div className="stock-row">
-                <span>Opening:</span>
-                <strong>{latestStock.live_bird_opening?.toFixed(2) || '0'} kg</strong>
-              </div>
-              <div className="stock-row">
-                <span>Purchased:</span>
-                <strong>{latestStock.live_bird_purchased?.toFixed(2) || '0'} kg</strong>
-              </div>
-              <div className="stock-row">
-                <span>Processed:</span>
-                <strong>{latestStock.live_bird_processed?.toFixed(2) || '0'} kg</strong>
-              </div>
-              <div className="stock-row">
-                <span>Sold:</span>
-                <strong>{latestStock.live_bird_sold?.toFixed(2) || '0'} kg</strong>
-              </div>
-              <div className="stock-row total">
-                <span>Closing:</span>
-                <strong>{latestStock.live_bird_closing?.toFixed(2) || '0'} kg</strong>
-              </div>
-            </div>
-
-            <div className="stock-item">
-              <h3>Meat</h3>
-              <div className="stock-row">
-                <span>Opening:</span>
-                <strong>{latestStock.meat_opening?.toFixed(2) || '0'} kg</strong>
-              </div>
-              <div className="stock-row">
-                <span>Produced:</span>
-                <strong>{latestStock.meat_produced?.toFixed(2) || '0'} kg</strong>
-              </div>
-              <div className="stock-row">
-                <span>Sold:</span>
-                <strong>{latestStock.meat_sold?.toFixed(2) || '0'} kg</strong>
-              </div>
-              <div className="stock-row total">
-                <span>Closing:</span>
-                <strong>{latestStock.meat_closing?.toFixed(2) || '0'} kg</strong>
+                <div>
+                  <h3 style={{ marginTop: 0, color: '#2980b9' }}>Meat</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #eee', marginBottom: '8px' }}>
+                    <span>Opening:</span>
+                    <strong>{latestStock.meat_opening?.toFixed(2) || '0'} kg</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #eee', marginBottom: '8px' }}>
+                    <span>Produced:</span>
+                    <strong>{latestStock.meat_produced?.toFixed(2) || '0'} kg</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #eee', marginBottom: '8px' }}>
+                    <span>Sold:</span>
+                    <strong>{latestStock.meat_sold?.toFixed(2) || '0'} kg</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '2px solid #2980b9', marginBottom: '8px', fontWeight: '600', fontSize: '16px' }}>
+                    <span>Closing:</span>
+                    <strong>{latestStock.meat_closing?.toFixed(2) || '0'} kg</strong>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h1 style={{ margin: 0 }}>📊 Godown Stock</h1>
+          <button className="btn btn-success" onClick={() => setShowForm(!showForm)}>
+            {showForm ? '✕ Cancel' : '+ Set Opening Stock'}
+          </button>
         </div>
-      )}
 
-      <div className="action-bar">
-        <button className="primary-btn" onClick={() => setShowForm(!showForm)}>
-          {showForm ? '✕ Cancel' : '+ Set Opening Stock'}
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="form-section">
-          <h2>Set Opening Stock</h2>
+        {showForm && (
+          <div style={{ background: 'white', padding: '16px', borderRadius: '8px', marginBottom: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            <h2>Set Opening Stock</h2>
           <form onSubmit={handleAddStock}>
             <div className="form-group">
               <label>Date</label>
@@ -146,57 +145,58 @@ function GodownStock({ user, onLogout }) {
 
             <button type="submit" className="primary-btn">Set Opening Stock</button>
           </form>
-        </div>
-      )}
+          </div>
+        )}
 
-      {loading ? (
-        <div className="loading">Loading stock history...</div>
-      ) : (
-        <div className="data-section">
-          <h2>Stock History ({stock.length})</h2>
-          {stock.length === 0 ? (
-            <p>No stock records</p>
-          ) : (
-            <div className="table-responsive">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Live Bird Open</th>
-                    <th>Live Bird Purchased</th>
-                    <th>Live Bird Processed</th>
-                    <th>Live Bird Sold</th>
-                    <th>Live Bird Close</th>
-                    <th>Meat Open</th>
-                    <th>Meat Produced</th>
-                    <th>Meat Sold</th>
-                    <th>Meat Close</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stock.map(s => (
-                    <tr key={s.id}>
-                      <td>{new Date(s.date).toLocaleDateString()}</td>
-                      <td>{s.live_bird_opening?.toFixed(2) || '0'}</td>
-                      <td>{s.live_bird_purchased?.toFixed(2) || '0'}</td>
-                      <td>{s.live_bird_processed?.toFixed(2) || '0'}</td>
-                      <td>{s.live_bird_sold?.toFixed(2) || '0'}</td>
-                      <td><strong>{s.live_bird_closing?.toFixed(2) || '0'}</strong></td>
-                      <td>{s.meat_opening?.toFixed(2) || '0'}</td>
-                      <td>{s.meat_produced?.toFixed(2) || '0'}</td>
-                      <td>{s.meat_sold?.toFixed(2) || '0'}</td>
-                      <td><strong>{s.meat_closing?.toFixed(2) || '0'}</strong></td>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '20px' }}>Loading stock history...</div>
+        ) : (
+          <div>
+            <h2>Stock History ({stock.length})</h2>
+            {stock.length === 0 ? (
+              <p>No stock records</p>
+            ) : (
+              <div style={{ overflowX: 'auto', background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ background: '#ecf0f1', borderBottom: '2px solid #bdc3c7' }}>
+                      <th style={{ padding: '8px', textAlign: 'left' }}>Date</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>LB Open</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>LB Purch</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>LB Proc</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>LB Sold</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>LB Close</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>M Open</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>M Prod</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>M Sold</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>M Close</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+                  </thead>
+                  <tbody>
+                    {stock.map((s, idx) => (
+                      <tr key={s.id} style={{ borderBottom: '1px solid #eee', background: idx % 2 === 0 ? 'white' : '#f9f9f9' }}>
+                        <td style={{ padding: '8px' }}>{new Date(s.date).toLocaleDateString()}</td>
+                        <td style={{ padding: '8px', textAlign: 'right' }}>{s.live_bird_opening?.toFixed(1) || '0'}</td>
+                        <td style={{ padding: '8px', textAlign: 'right' }}>{s.live_bird_purchased?.toFixed(1) || '0'}</td>
+                        <td style={{ padding: '8px', textAlign: 'right' }}>{s.live_bird_processed?.toFixed(1) || '0'}</td>
+                        <td style={{ padding: '8px', textAlign: 'right' }}>{s.live_bird_sold?.toFixed(1) || '0'}</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontWeight: '600' }}>{s.live_bird_closing?.toFixed(1) || '0'}</td>
+                        <td style={{ padding: '8px', textAlign: 'right' }}>{s.meat_opening?.toFixed(1) || '0'}</td>
+                        <td style={{ padding: '8px', textAlign: 'right' }}>{s.meat_produced?.toFixed(1) || '0'}</td>
+                        <td style={{ padding: '8px', textAlign: 'right' }}>{s.meat_sold?.toFixed(1) || '0'}</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontWeight: '600' }}>{s.meat_closing?.toFixed(1) || '0'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <Navigation active="godown-stock" user={user} />
-    </div>
+    </>
   );
 }
 
