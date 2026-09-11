@@ -196,6 +196,7 @@ function Users({ user, onLogout }) {
                 >
                   <option value="ADMIN">Admin</option>
                   <option value="SALES_USER">Sales User</option>
+                  <option value="GODOWN_MANAGER">Godown Manager</option>
                 </select>
               </div>
 
