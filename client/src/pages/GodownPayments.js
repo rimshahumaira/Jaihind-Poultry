@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import { API } from '../App';
-import '../styles/Collections.css';
 
 function GodownPayments({ user, onLogout }) {
   const navigate = useNavigate();

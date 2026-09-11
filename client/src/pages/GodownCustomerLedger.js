@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import { API } from '../App';
-import '../styles/CustomerLedger.css';
 
 function GodownCustomerLedger({ user, onLogout }) {
   const navigate = useNavigate();
